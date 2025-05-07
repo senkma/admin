@@ -25,6 +25,8 @@ services:
             - symfony_app_vendor:/var/www/symfony/vendor
         networks:
             - symfony_app
+        environment:
+            APP_ENV: ${APP_ENV:-prod}
     nginx:
         build:
             context: ./nginx
