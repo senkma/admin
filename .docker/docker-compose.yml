@@ -1,9 +1,7 @@
-version: "3"
-
 services:
     db:
         image: mysql:8.0.33
-        platform: linux/x86_64
+        platform: linux/amd64
         command: --default-authentication-plugin=mysql_native_password
         volumes:
             - "db_app:/var/lib/mysql"
@@ -38,8 +36,6 @@ services:
             - 80:80
         networks:
             - symfony_app
-        env_file:
-            - .env.nginx.local
 
 volumes:
     symfony_app_var:
