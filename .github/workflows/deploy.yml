@@ -19,6 +19,8 @@ jobs:
                   php-version: '8.2'
 
             - name: Install dependencies
+              env:
+                  APP_ENV: prod
               run: composer install --no-dev --optimize-autoloader
 
             - name: Deploy to server
@@ -26,6 +28,7 @@ jobs:
                   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
                   SERVER_HOST: ${{ secrets.SERVER_HOST }}
                   SERVER_USER: ${{ secrets.SERVER_USER }}
+                  APP_ENV: prod
               run: |
                   mkdir -p ~/.ssh
                   echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
