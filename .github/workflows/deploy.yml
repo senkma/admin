@@ -31,5 +31,5 @@ jobs:
                   echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
                   chmod 600 ~/.ssh/id_rsa
                   ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
-                  rsync -avz --exclude='.git' ./ $SERVER_USER@$SERVER_HOST:/path/to/project
+                  rsync -avz --exclude='.git' ./ $SERVER_USER@$SERVER_HOST:/var/www/admin
                   ssh $SERVER_USER@$SERVER_HOST "cd /path/to/project && docker compose up -d"
