@@ -36,4 +36,4 @@ jobs:
                   ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
                   rsync -avz --exclude='.git' ./ $SERVER_USER@$SERVER_HOST:/var/www/admin
                   ssh $SERVER_USER@$SERVER_HOST "cd /var/www/admin/.docker && docker compose up -d"
-                  docker exec -it admin-php-1 composer install --no-dev --optimize-autoloader
+                  ssh $SERVER_USER@$SERVER_HOST "docker exec -it admin-php-1 composer install --no-dev --optimize-autoloader"
