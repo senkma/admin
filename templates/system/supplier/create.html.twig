@@ -1,0 +1,62 @@
+{% extends 'system/base_system.html.twig' %}
+
+{% block title %}Vytvořit dodavatele{% endblock %}
+
+{% block body %}
+  <h2>Vytvořit nového dodavatele</h2>
+  {{ form_start(form) }}
+  <div class="form-container">
+    <div class="form-group">
+      {{ form_label(form.name, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.street, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.street, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.number, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.number, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.city, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.city, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.postal_code, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.postal_code, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.telephone, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.telephone, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.invoice_email, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.invoice_email, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.dic, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.dic, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.ico, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.ico, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.description, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.bank_account, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.bank_account, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.vat_payer, null, {'label_attr': {'class': 'form-label'}}) }}
+      {{ form_widget(form.vat_payer, {'attr': {'class': 'form-check-input'}}) }}
+    </div>
+    <div class="form-group text-center">
+      <button class="btn btn-primary">Uložit</button>
+    </div>
+  </div>
+  {{ form_end(form) }}
+{% endblock %}

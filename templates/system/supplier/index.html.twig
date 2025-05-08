@@ -1,0 +1,44 @@
+{% extends 'system/base_system.html.twig' %}
+
+{% block title %}Dodavatelé{% endblock %}
+
+{% block body %}
+  <div class="table-container">
+  <h2>Seznam dodavatelů</h2>
+  <a href="{{ path('supplier_create') }}" class="btn btn-primary">Vytvořit nového dodavatele</a>
+  <table>
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Název</th>
+      <th>Adresa</th>
+      <th>Telefon</th>
+      <th>Email</th>
+      <th>Akce</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for supplier in suppliers %}
+      <tr>
+        <td>{{ supplier.id }}</td>
+        <td>{{ supplier.name }}</td>
+        <td>{{ supplier.street }} {{ supplier.number }}, {{ supplier.city }} {{ supplier.postalCode }}</td>
+        <td>{{ supplier.telephone }}</td>
+        <td>{{ supplier.invoiceEmail }}</td>
+        <td>
+          <a href="{{ path('supplier_edit', { id: supplier.id }) }}" class="btn btn-warning">Edit</a>
+          <form action="{{ path('supplier_delete', { id: supplier.id }) }}" method="post" style="display:inline;">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Opravdu chcete smazat tohoto dodavatele?')">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="6">Žádní dodavatelé nebyli nalezeni.</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+{% endblock %}

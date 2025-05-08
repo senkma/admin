@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Systém{% endblock %}</title>
+  <link rel="stylesheet" href="/system/css/system.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<header>
+  <nav class="nav-left">
+    <div>
+      <img src="/images/logo.png" alt="Logo">
+    </div>
+    <div>
+      <a href="{{ path('system_dashboard') }}">Dashboard</a>
+      <a href="{{ path('client_index') }}">Klienti</a>
+      <a href="{{ path('invoice_index') }}">Faktury</a>
+    </div>
+  </nav>
+  <nav class="nav-right">
+    <div>
+      <a href="{{ path('supplier_index') }}">Dodavatelé</a>
+      <a href="{{ path('app_logout') }}">Odhlásit se</a>
+    </div>
+  </nav>
+</header>
+<main>
+  {% block body %}{% endblock %}
+</main>
+<footer>
+  <p>&copy; {{ "now"|date("Y") }} Systémová administrace. Všechna práva vyhrazena.</p>
+</footer>
+</body>
+</html>

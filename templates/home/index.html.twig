@@ -1,12 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ title }}</title>
-</head>
-<body>
-<h1>Vítejte ve fakturačním systému</h1>
-<p>Toto je úvodní stránka vašeho systému pro správu faktur.</p>
-</body>
-</html>
+{% extends 'home/base.html.twig' %}
+
+{% block title %}Úvodní stránka{% endblock %}
+
+{% block body %}
+  <div class="hero">
+    <h2>Vítejte ve fakturačním systému</h2>
+    <p>Spravujte své faktury snadno, rychle a efektivně.</p>
+    <a href="/login" class="btn btn-primary">Přihlásit se</a>
+    <a href="/register" class="btn btn-secondary">Zaregistrovat se</a>
+  </div>
+
+  <section class="features">
+    <h3>Proč si vybrat náš systém?</h3>
+    <div class="feature-list">
+      <div class="feature-item">
+        <h4>Jednoduché ovládání</h4>
+        <p>Intuitivní rozhraní, které zvládne každý.</p>
+      </div>
+      <div class="feature-item">
+        <h4>Bezpečnost</h4>
+        <p>Vaše data jsou u nás v bezpečí díky moderním technologiím.</p>
+      </div>
+      <div class="feature-item">
+        <h4>Flexibilita</h4>
+        <p>Přizpůsobte si systém podle svých potřeb.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="testimonials">
+    <h3>Co o nás říkají naši uživatelé</h3>
+    <div class="testimonial-list">
+      <div class="testimonial-item">
+        <p>"Díky tomuto systému jsem ušetřil hodiny práce každý měsíc!"</p>
+        <span>- Jan Novák</span>
+      </div>
+      <div class="testimonial-item">
+        <p>"Skvělý nástroj pro správu faktur, doporučuji všem podnikatelům."</p>
+        <span>- Petra Dvořáková</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h3>Připraven začít?</h3>
+    <p>Registrujte se ještě dnes a zjednodušte si správu faktur.</p>
+    <a href="/register" class="btn btn-primary">Zaregistrovat se</a>
+  </section>
+{% endblock %}

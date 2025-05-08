@@ -1,0 +1,24 @@
+{% extends 'home/base.html.twig' %}
+
+{% block title %}Přihlášení{% endblock %}
+
+{% block body %}
+  <div class="form-container">
+    <h1>Přihlášení</h1>
+    <form method="post">
+      {% if error %}
+        <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+      {% endif %}
+      <div class="form-group">
+        <label for="username">Email:</label>
+        <input type="text" id="username" name="_username" value="{{ last_username }}" required class="form-control">
+      </div>
+      <div class="form-group">
+        <label for="password">Heslo:</label>
+        <input type="password" id="password" name="_password" required class="form-control">
+      </div>
+      <button type="submit" class="btn btn-primary">Přihlásit se</button>
+    </form>
+    <p>Nemáte účet? <a href="{{ path('app_register') }}">Zaregistrujte se</a></p>
+  </div>
+{% endblock %}

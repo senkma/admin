@@ -1,0 +1,15 @@
+{% extends 'home/base.html.twig' %}
+
+{% block title %}Registrace{% endblock %}
+
+{% block body %}
+  <div class="form-container">
+    <h1>Registrace</h1>
+    {{ form_start(registrationForm) }}
+    <div class="form-group">
+      {{ form_widget(registrationForm, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <button type="submit" class="btn btn-primary">Registrovat</button>
+    {{ form_end(registrationForm) }}
+  </div>
+{% endblock %}

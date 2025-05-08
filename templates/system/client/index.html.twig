@@ -1,0 +1,46 @@
+{% extends 'system/base_system.html.twig' %}
+
+{% block title %}Klienti{% endblock %}
+
+{% block body %}
+
+
+  <div class="table-container">
+    <h2>Seznam klientů</h2>
+    <a href="{{ path('client_create') }}" class="btn btn-primary">Vytvořit nového klienta</a>
+  <table>
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Jméno</th>
+      <th>Adresa</th>
+      <th>Telefon</th>
+      <th>Email</th>
+      <th>Akce</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for client in clients %}
+      <tr>
+        <td>{{ client.id }}</td>
+        <td>{{ client.name }}</td>
+        <td>{{ client.street }} {{ client.number }}, {{ client.city }} {{ client.postalCode }}</td>
+        <td>{{ client.telephone }}</td>
+        <td>{{ client.invoiceEmail }}</td>
+        <td>
+          <a href="{{ path('client_edit', { id: client.id }) }}" class="btn btn-warning">Edit</a>
+          <form action="{{ path('client_delete', { id: client.id }) }}" method="post" style="display:inline;">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Opravdu chcete smazat tohoto klienta?')">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="6">Žádní klienti nebyli nalezeni.</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+{% endblock %}

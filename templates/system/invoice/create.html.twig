@@ -1,0 +1,199 @@
+{% extends 'system/base_system.html.twig' %}
+
+{% block title %}Vytvořit fakturu{% endblock %}
+
+{% block body %}
+  <h2>{{ invoice.id ? 'Upravit fakturu' : 'Vytvořit fakturu' }}</h2>
+  {{ form_start(form) }}
+  <div class="form-container">
+    <div class="form-group">
+      {{ form_label(form.invoice_number) }}
+      {{ form_widget(form.invoice_number, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.date_created) }}
+      {{ form_widget(form.date_created, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.date_due) }}
+      {{ form_widget(form.date_due, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.supplier) }}
+      {{ form_widget(form.supplier, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.client) }}
+      {{ form_widget(form.client, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <h3>Položky faktury</h3>
+
+    <table class="invoice-items-table">
+      <thead>
+      <tr>
+        <th>Název položky</th>
+        <th>Počet</th>
+        <th>Cena za kus</th>
+        <th>Cena za položku</th>
+        <th>Akce</th>
+      </tr>
+      </thead>
+      <tbody id="invoice-items" data-prototype="{{ form_widget(form.items.vars.prototype)|e('html') }}">
+      {% for item in form.items %}
+        <tr>
+          <td>{{ form_widget(item.name, {'attr': {'class': 'form-control'}}) }}</td>
+          <td>{{ form_widget(item.quantity, {'attr': {'class': 'form-control'}}) }}</td>
+          <td>{{ form_widget(item.price_per_unit, {'attr': {'class': 'form-control'}}) }}</td>
+          <td class="item-total">0.00</td>
+          <td><button type="button" class="btn btn-danger remove-item">Odstranit</button></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <button type="button" class="btn btn-secondary" id="add-item">Přidat položku</button>
+
+    <div class="form-group text-center">
+      <p id="total-price">Celková cena: 0 Kč</p>
+      <button class="btn btn-primary">Uložit</button>
+    </div>
+  </div>
+  {{ form_end(form) }}
+
+  <script>
+    document.getElementById('add-item').addEventListener('click', function () {
+      const itemsContainer = document.getElementById('invoice-items');
+      const prototype = itemsContainer.dataset.prototype;
+      const index = itemsContainer.querySelectorAll('tr').length;
+
+      // Vytvoření nového řádku
+      const newItem = prototype.replace(/__name__/g, index);
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = newItem;
+
+      // Vytvoření nového řádku tabulky
+      const row = document.createElement('tr');
+      row.className = 'invoice-item-row';
+
+      // Iterace přes děti a rozdělení do jednotlivých <td>
+      ['name', 'quantity', 'price_per_unit'].forEach(field => {
+        const input = tempDiv.querySelector(`[name*="[${field}]"]`);
+        if (input) {
+          input.classList.add('form-control'); // Přidání třídy pro design
+          const cell = document.createElement('td');
+          cell.className = 'invoice-item-cell';
+          cell.appendChild(input);
+          row.appendChild(cell);
+        }
+      });
+
+      // Přidání ceny za položku
+      const totalCell = document.createElement('td');
+      totalCell.className = 'item-total';
+      totalCell.textContent = '0'; // Výchozí hodnota
+      row.appendChild(totalCell);
+
+      // Přidání tlačítka "Odstranit"
+      const actionCell = document.createElement('td');
+      actionCell.className = 'invoice-item-cell';
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'btn btn-danger remove-item';
+      removeButton.textContent = 'Odstranit';
+      actionCell.appendChild(removeButton);
+      row.appendChild(actionCell);
+
+      itemsContainer.appendChild(row);
+    });
+
+    document.getElementById('invoice-items').addEventListener('click', function (e) {
+      if (e.target.classList.contains('remove-item')) {
+        e.target.closest('tr').remove();
+      }
+    });
+
+    document.getElementById('invoice-items').addEventListener('input', function (e) {
+      if (e.target.classList.contains('form-control')) {
+        const row = e.target.closest('tr');
+        const quantityInput = row.querySelector('[name*="[quantity]"]');
+        const priceInput = row.querySelector('[name*="[price_per_unit]"]');
+        const totalCell = row.querySelector('.item-total');
+
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        const total = (quantity * price).toFixed(2);
+
+        if (totalCell) {
+          totalCell.textContent = total;
+        } else {
+          const newTotalCell = document.createElement('td');
+          newTotalCell.className = 'item-total';
+          newTotalCell.textContent = total;
+          row.appendChild(newTotalCell);
+        }
+      }
+    });
+
+    function calculateRowTotal(row) {
+      const quantityInput = row.querySelector('[name*="[quantity]"]');
+      const priceInput = row.querySelector('[name*="[price_per_unit]"]');
+      const totalCell = row.querySelector('.item-total');
+
+      const quantity = parseFloat(quantityInput.value) || 0;
+      const price = parseFloat(priceInput.value) || 0;
+      const total = (quantity * price).toFixed(2);
+
+      if (totalCell) {
+        totalCell.textContent = total;
+      } else {
+        const newTotalCell = document.createElement('td');
+        newTotalCell.className = 'item-total';
+        newTotalCell.textContent = total;
+        row.appendChild(newTotalCell);
+      }
+    }
+
+    function calculateAllRows() {
+      const rows = document.querySelectorAll('#invoice-items tr');
+      rows.forEach(row => calculateRowTotal(row));
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      calculateAllRows(); // Spočítá ceny při načtení stránky
+
+      document.getElementById('invoice-items').addEventListener('input', function (e) {
+        if (e.target.classList.contains('form-control')) {
+          const row = e.target.closest('tr');
+          calculateRowTotal(row); // Spočítá cenu při změně vstupu
+        }
+      });
+    });
+
+
+  </script>
+  <script>
+    function calculateTotalPrice() {
+      const rows = document.querySelectorAll('#invoice-items tr');
+      let totalPrice = 0;
+
+      rows.forEach(row => {
+        const quantityInput = row.querySelector('[name*="[quantity]"]');
+        const priceInput = row.querySelector('[name*="[price_per_unit]"]');
+
+        if (quantityInput && priceInput) {
+          const quantity = parseFloat(quantityInput.value) || 0;
+          const pricePerUnit = parseFloat(priceInput.value) || 0;
+          totalPrice += quantity * pricePerUnit;
+        }
+      });
+
+      document.getElementById('total-price').textContent = `Celková cena: ${totalPrice.toFixed(2)} Kč`;
+    }
+
+    document.getElementById('invoice-items').addEventListener('input', calculateTotalPrice);
+    document.getElementById('add-item').addEventListener('click', calculateTotalPrice);
+
+    document.addEventListener('DOMContentLoaded', function () {
+      calculateTotalPrice();
+    });
+  </script>
+{% endblock %}
