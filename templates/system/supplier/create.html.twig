@@ -47,8 +47,51 @@
       {{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
     </div>
     <div class="form-group">
-      {{ form_label(form.bank_account, null, {'label_attr': {'class': 'form-label'}}) }}
-      {{ form_widget(form.bank_account, {'attr': {'class': 'form-control'}}) }}
+      {{ form_label(form.bankAccounts, null, {'label_attr': {'class': 'form-label'}}) }}
+      <div id="bank-accounts-collection" data-prototype="{{ form_widget(form.bankAccounts.vars.prototype)|e('html') }}">
+        {% for bankAccount in form.bankAccounts %}
+          <div class="bank-account-item">
+            <div class="bank-account-fields">
+              <div class="bank-selector-wrapper">
+                {{ form_label(bankAccount.bank_selector) }}
+                {{ form_widget(bankAccount.bank_selector, {'attr': {'class': 'form-control bank-selector'}}) }}
+              </div>
+              <div class="account-details" style="display: none;">
+                <div class="form-row">
+                  <div class="form-group">
+                    {{ form_label(bankAccount.account_number) }}
+                    {{ form_widget(bankAccount.account_number, {'attr': {'class': 'form-control'}}) }}
+                  </div>
+                  <div class="form-group">
+                    {{ form_label(bankAccount.bank_code) }}
+                    {{ form_widget(bankAccount.bank_code, {'attr': {'class': 'form-control bank-code-input'}}) }}
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    {{ form_label(bankAccount.bank_name) }}
+                    {{ form_widget(bankAccount.bank_name, {'attr': {'class': 'form-control bank-name-input'}}) }}
+                  </div>
+                  <div class="form-group">
+                    {{ form_label(bankAccount.swift) }}
+                    {{ form_widget(bankAccount.swift, {'attr': {'class': 'form-control swift-input'}}) }}
+                  </div>
+                </div>
+                <div class="form-group">
+                  {{ form_label(bankAccount.iban) }}
+                  {{ form_widget(bankAccount.iban, {'attr': {'class': 'form-control'}}) }}
+                </div>
+                <div class="checkbox-wrapper">
+                  {{ form_widget(bankAccount.is_default, {'attr': {'class': 'form-check-input'}}) }}
+                  {{ form_label(bankAccount.is_default, 'Výchozí účet', {'label_attr': {'class': 'form-check-label'}}) }}
+                </div>
+              </div>
+              <button type="button" class="btn btn-danger btn-sm remove-bank-account">Odebrat</button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <button type="button" id="add-bank-account" class="btn btn-secondary">Přidat bankovní účet</button>
     </div>
     <div class="form-group">
       {{ form_label(form.vat_payer, null, {'label_attr': {'class': 'form-label'}}) }}
@@ -59,4 +102,112 @@
     </div>
   </div>
   {{ form_end(form) }}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const collectionHolder = document.getElementById('bank-accounts-collection');
+      const addButton = document.getElementById('add-bank-account');
+
+      // Definice bank s jejich údaji
+      const bankData = {
+        'Komerční banka': { code: '0100', swift: 'KOMBCZPP' },
+        'Česká spořitelna': { code: '0800', swift: 'GIBACZPX' },
+        'ČSOB': { code: '0300', swift: 'CEKOCZPP' },
+        'UniCredit Bank': { code: '2700', swift: 'BACXCZPP' },
+        'Raiffeisenbank': { code: '5500', swift: 'RZBCCZPP' },
+        'mBank': { code: '6210', swift: 'BREXCZPP' },
+        'Fio banka': { code: '2010', swift: 'FIOBCZPP' },
+        'Air Bank': { code: '3030', swift: 'AIRACZPP' },
+        'Equa bank': { code: '6100', swift: 'EQBKCZPP' }
+      };
+
+      function setupBankSelector(container) {
+        const selector = container.querySelector('.bank-selector');
+        const accountDetails = container.querySelector('.account-details');
+        const bankCodeInput = container.querySelector('.bank-code-input');
+        const bankNameInput = container.querySelector('.bank-name-input');
+        const swiftInput = container.querySelector('.swift-input');
+
+        if (selector) {
+          selector.addEventListener('change', function() {
+            const selectedBank = this.value;
+
+            if (selectedBank === '') {
+              accountDetails.style.display = 'none';
+            } else if (selectedBank === 'custom') {
+              accountDetails.style.display = 'block';
+              // Vyčistit předvyplněné hodnoty pro vlastní banku
+              if (bankCodeInput) bankCodeInput.value = '';
+              if (bankNameInput) bankNameInput.value = '';
+              if (swiftInput) swiftInput.value = '';
+            } else {
+              accountDetails.style.display = 'block';
+              // Předvyplnit údaje vybrané banky
+              if (bankData[selectedBank]) {
+                if (bankCodeInput) bankCodeInput.value = bankData[selectedBank].code;
+                if (bankNameInput) bankNameInput.value = selectedBank;
+                if (swiftInput) swiftInput.value = bankData[selectedBank].swift;
+              }
+            }
+          });
+        }
+      }
+
+      let index = collectionHolder.children.length;
+
+      // Nastavit existující selektory
+      collectionHolder.querySelectorAll('.bank-account-item').forEach(setupBankSelector);
+
+      addButton.addEventListener('click', function() {
+        const prototype = collectionHolder.dataset.prototype;
+        const newForm = prototype.replace(/__name__/g, index);
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bank-account-item';
+        wrapper.innerHTML = newForm;
+
+        // Přidat CSS třídy k novým inputům
+        const inputs = wrapper.querySelectorAll('input[type="text"]');
+        inputs.forEach(input => {
+          input.classList.add('form-control');
+        });
+
+        const selects = wrapper.querySelectorAll('select');
+        selects.forEach(select => {
+          select.classList.add('form-control');
+        });
+
+        const checkboxes = wrapper.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+          checkbox.classList.add('form-check-input');
+        });
+
+        // Přidat remove button
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'btn btn-danger btn-sm remove-bank-account';
+        removeButton.textContent = 'Odebrat';
+        removeButton.addEventListener('click', function() {
+          wrapper.remove();
+        });
+
+        const fieldsDiv = wrapper.querySelector('.bank-account-fields');
+        fieldsDiv.appendChild(removeButton);
+
+        collectionHolder.appendChild(wrapper);
+
+        // Nastavit bank selector pro nový prvek
+        setupBankSelector(wrapper);
+
+        index++;
+      });
+
+      // Event listener pro existující tlačítka odebrat
+      document.querySelectorAll('.remove-bank-account').forEach(function(button) {
+        button.addEventListener('click', function() {
+          button.closest('.bank-account-item').remove();
+        });
+      });
+    });
+  </script>
 {% endblock %}

@@ -14,6 +14,7 @@
       <th>Adresa</th>
       <th>Telefon</th>
       <th>Email</th>
+      <th>Bankovní účty</th>
       <th>Akce</th>
     </tr>
     </thead>
@@ -26,6 +27,23 @@
         <td>{{ supplier.telephone }}</td>
         <td>{{ supplier.invoiceEmail }}</td>
         <td>
+          {% if supplier.bankAccounts|length > 0 %}
+            {% for bankAccount in supplier.bankAccounts %}
+              <div class="bank-account-item">
+                {{ bankAccount.fullAccountNumber }}
+                {% if bankAccount.bankName %}
+                  <small>({{ bankAccount.bankName }})</small>
+                {% endif %}
+                {% if bankAccount.isDefault %}
+                  <span class="badge badge-primary">Výchozí</span>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <em>Žádné účty</em>
+          {% endif %}
+        </td>
+        <td>
           <a href="{{ path('supplier_edit', { id: supplier.id }) }}" class="btn btn-warning">Edit</a>
           <form action="{{ path('supplier_delete', { id: supplier.id }) }}" method="post" style="display:inline;">
             <input type="hidden" name="_method" value="DELETE">
@@ -35,7 +53,7 @@
       </tr>
     {% else %}
       <tr>
-        <td colspan="6">Žádní dodavatelé nebyli nalezeni.</td>
+        <td colspan="7">Žádní dodavatelé nebyli nalezeni.</td>
       </tr>
     {% endfor %}
     </tbody>

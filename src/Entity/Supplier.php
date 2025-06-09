@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -43,15 +45,20 @@ class Supplier
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(type: 'string', length: 50, nullable: true)]
-    private ?string $bank_account = null;
-
     #[ORM\Column(type: 'boolean')]
     private bool $vat_payer = false;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
+
+    #[ORM\OneToMany(mappedBy: 'supplier', targetEntity: BankAccount::class, cascade: ['persist', 'remove'])]
+    private Collection $bankAccounts;
+
+    public function __construct()
+    {
+        $this->bankAccounts = new ArrayCollection();
+    }
 
     public function getUser(): ?User
     {
@@ -190,16 +197,45 @@ class Supplier
         return $this;
     }
 
-    public function getBankAccount(): ?string
+    /**
+     * @return Collection<int, BankAccount>
+     */
+    public function getBankAccounts(): Collection
     {
-        return $this->bank_account;
+        return $this->bankAccounts;
     }
 
-    public function setBankAccount(?string $bank_account): self
+    public function addBankAccount(BankAccount $bankAccount): self
     {
-        $this->bank_account = $bank_account;
+        if (!$this->bankAccounts->contains($bankAccount)) {
+            $this->bankAccounts->add($bankAccount);
+            $bankAccount->setSupplier($this);
+        }
 
         return $this;
+    }
+
+    public function removeBankAccount(BankAccount $bankAccount): self
+    {
+        if ($this->bankAccounts->removeElement($bankAccount)) {
+            if ($bankAccount->getSupplier() === $this) {
+                $bankAccount->setSupplier(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getDefaultBankAccount(): ?BankAccount
+    {
+        foreach ($this->bankAccounts as $bankAccount) {
+            if ($bankAccount->isDefault()) {
+                return $bankAccount;
+            }
+        }
+
+        // Pokud není žádný označen jako výchozí, vrátí první
+        return $this->bankAccounts->first() ?: null;
     }
 
     public function isVatPayer(): bool

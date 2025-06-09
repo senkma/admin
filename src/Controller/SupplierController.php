@@ -3,11 +3,13 @@
 namespace App\Controller;
 
 use App\Entity\Supplier;
+use App\Entity\BankAccount;
 use App\Form\SupplierType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
 class SupplierController extends AbstractController
@@ -67,5 +69,133 @@ class SupplierController extends AbstractController
         $entityManager->flush();
 
         return $this->redirectToRoute('supplier_index');
+    }
+
+    #[Route('/suppliers/{id}/bank-accounts/create', name: 'supplier_bank_account_create', methods: ['POST'])]
+    public function createBankAccount(Request $request, Supplier $supplier, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        // Debug log
+        error_log('Creating bank account with data: ' . json_encode($data));
+
+        try {
+            $bankAccount = new BankAccount();
+            $bankAccount->setSupplier($supplier);
+            $bankAccount->setAccountNumber($data['account_number']);
+            $bankAccount->setBankCode($data['bank_code'] ?? null);
+            $bankAccount->setBankName($data['bank_name'] ?? null);
+            $bankAccount->setIban($data['iban'] ?? null);
+            $bankAccount->setSwift($data['swift'] ?? null);
+            $bankAccount->setIsDefault((bool)($data['is_default'] ?? false));
+
+            // Pokud je tento účet nastaven jako výchozí, zrušit výchozí u ostatních
+            if ($bankAccount->isDefault()) {
+                $this->unsetDefaultBankAccounts($supplier, $entityManager);
+            }
+
+            $entityManager->persist($bankAccount);
+            $entityManager->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'account' => [
+                    'id' => $bankAccount->getId(),
+                    'account_number' => $bankAccount->getAccountNumber(),
+                    'bank_code' => $bankAccount->getBankCode(),
+                    'bank_name' => $bankAccount->getBankName(),
+                    'iban' => $bankAccount->getIban(),
+                    'swift' => $bankAccount->getSwift(),
+                    'is_default' => $bankAccount->isDefault()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Chyba při vytváření bankovního účtu: ' . $e->getMessage()
+            ], 400);
+        }
+    }
+
+    #[Route('/suppliers/{supplierId}/bank-accounts/{accountId}/update', name: 'supplier_bank_account_update', methods: ['POST'])]
+    public function updateBankAccount(Request $request, int $supplierId, int $accountId, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        // Debug log
+        error_log('Updating bank account with data: ' . json_encode($data));
+
+        try {
+            $bankAccount = $entityManager->getRepository(BankAccount::class)->find($accountId);
+            if (!$bankAccount || $bankAccount->getSupplier()->getId() !== $supplierId) {
+                return new JsonResponse(['success' => false, 'message' => 'Bankovní účet nenalezen'], 404);
+            }
+
+            $bankAccount->setAccountNumber($data['account_number']);
+            $bankAccount->setBankCode($data['bank_code'] ?? null);
+            $bankAccount->setBankName($data['bank_name'] ?? null);
+            $bankAccount->setIban($data['iban'] ?? null);
+            $bankAccount->setSwift($data['swift'] ?? null);
+            $bankAccount->setIsDefault((bool)($data['is_default'] ?? false));
+
+            // Pokud je tento účet nastaven jako výchozí, zrušit výchozí u ostatních
+            if ($bankAccount->isDefault()) {
+                $this->unsetDefaultBankAccounts($bankAccount->getSupplier(), $entityManager, $bankAccount);
+            }
+
+            $entityManager->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'account' => [
+                    'id' => $bankAccount->getId(),
+                    'account_number' => $bankAccount->getAccountNumber(),
+                    'bank_code' => $bankAccount->getBankCode(),
+                    'bank_name' => $bankAccount->getBankName(),
+                    'iban' => $bankAccount->getIban(),
+                    'swift' => $bankAccount->getSwift(),
+                    'is_default' => $bankAccount->isDefault()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Chyba při aktualizaci bankovního účtu: ' . $e->getMessage()
+            ], 400);
+        }
+    }
+
+    #[Route('/suppliers/{supplierId}/bank-accounts/{accountId}/delete', name: 'supplier_bank_account_delete', methods: ['POST'])]
+    public function deleteBankAccount(int $supplierId, int $accountId, EntityManagerInterface $entityManager): JsonResponse
+    {
+        try {
+            $bankAccount = $entityManager->getRepository(BankAccount::class)->find($accountId);
+            if (!$bankAccount || $bankAccount->getSupplier()->getId() !== $supplierId) {
+                return new JsonResponse(['success' => false, 'message' => 'Bankovní účet nenalezen'], 404);
+            }
+
+            $entityManager->remove($bankAccount);
+            $entityManager->flush();
+
+            return new JsonResponse(['success' => true]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Chyba při mazání bankovního účtu: ' . $e->getMessage()
+            ], 400);
+        }
+    }
+
+    private function unsetDefaultBankAccounts(Supplier $supplier, EntityManagerInterface $entityManager, BankAccount $excludeAccount = null): void
+    {
+        $bankAccounts = $supplier->getBankAccounts();
+        foreach ($bankAccounts as $account) {
+            if ($excludeAccount && $account->getId() === $excludeAccount->getId()) {
+                continue;
+            }
+            if ($account->isDefault()) {
+                $account->setIsDefault(false);
+            }
+        }
     }
 }

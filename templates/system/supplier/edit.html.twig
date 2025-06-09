@@ -47,8 +47,45 @@
       {{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
     </div>
     <div class="form-group">
-      {{ form_label(form.bank_account, null, {'label_attr': {'class': 'form-label'}}) }}
-      {{ form_widget(form.bank_account, {'attr': {'class': 'form-control'}}) }}
+      <label class="form-label">Bankovní účty</label>
+
+      <!-- Select existujících účtů -->
+      <div class="bank-accounts-management">
+        <div class="existing-accounts-section">
+          <label for="existing-accounts-select">Vyberte existující účet:</label>
+          <select id="existing-accounts-select" class="form-control">
+            <option value="">-- Vyberte účet --</option>
+            {% for bankAccount in supplier.bankAccounts %}
+              <option value="{{ bankAccount.id }}"
+                      data-account="{{ bankAccount.accountNumber }}"
+                      data-bank-code="{{ bankAccount.bankCode }}"
+                      data-bank-name="{{ bankAccount.bankName }}"
+                      data-iban="{{ bankAccount.iban }}"
+                      data-swift="{{ bankAccount.swift }}"
+                      data-is-default="{{ bankAccount.isDefault ? '1' : '0' }}"
+                      {% if bankAccount.isDefault %}selected{% endif %}>
+                {{ bankAccount.fullAccountNumber }}{% if bankAccount.bankName %} ({{ bankAccount.bankName }}){% endif %}
+                {% if bankAccount.isDefault %} - Výchozí{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+
+          <div class="account-actions mt-2">
+            <button type="button" id="add-account-btn" class="btn btn-success btn-sm">Přidat nový účet</button>
+            <button type="button" id="edit-account-btn" class="btn btn-primary btn-sm" disabled>Editovat</button>
+            <button type="button" id="delete-account-btn" class="btn btn-danger btn-sm" disabled>Smazat</button>
+          </div>
+        </div>
+
+        <!-- Placeholder pro formulář - formulář bude mimo Symfony form -->
+        <div id="account-form-placeholder" class="account-form-section mt-3" style="display: none;">
+        </div>
+      </div>
+
+      <!-- Skrytá kolekce pro Symfony formulář -->
+      <div style="display: none;">
+        {{ form_widget(form.bankAccounts) }}
+      </div>
     </div>
     <div class="form-group">
       {{ form_label(form.vat_payer, null, {'label_attr': {'class': 'form-label'}}) }}
@@ -59,4 +96,389 @@
     </div>
   </div>
   {{ form_end(form) }}
+
+  <!-- Formulář pro správu bankovních účtů - MIMO Symfony formulář -->
+  <div id="account-form-section" class="account-form-section mt-3" style="display: none;">
+    <div class="form-container">
+      <h5 id="account-form-title">Přidat nový účet</h5>
+      <div class="card">
+        <div class="card-body">
+          <form id="external-bank-account-form">
+            <input type="hidden" id="external-account-id" name="account_id" value="">
+
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="external-account-number">Číslo účtu *</label>
+                <input type="text" id="external-account-number" name="account_number" class="form-control" required>
+              </div>
+              <div class="form-group col-md-6">
+                <label for="external-bank-code">Kód banky</label>
+                <input type="text" id="external-bank-code" name="bank_code" class="form-control">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="external-bank-name">Název banky</label>
+                <input type="text" id="external-bank-name" name="bank_name" class="form-control">
+              </div>
+              <div class="form-group col-md-6">
+                <label for="external-swift">SWIFT</label>
+                <input type="text" id="external-swift" name="swift" class="form-control">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="external-iban">IBAN</label>
+              <input type="text" id="external-iban" name="iban" class="form-control">
+            </div>
+
+            <div class="form-check">
+              <input type="checkbox" id="external-is-default" name="is_default" class="form-check-input">
+              <label for="external-is-default" class="form-check-label">Výchozí účet</label>
+            </div>
+
+            <div class="form-actions mt-3">
+              <button type="submit" class="btn btn-success">Uložit</button>
+              <button type="button" id="external-cancel-account-form" class="btn btn-secondary">Zrušit</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+
+      // Elementy - hledáme pouze ty, které jsou viditelné při načtení
+      const existingAccountsSelect = document.getElementById('existing-accounts-select');
+      const addAccountBtn = document.getElementById('add-account-btn');
+      const editAccountBtn = document.getElementById('edit-account-btn');
+      const deleteAccountBtn = document.getElementById('delete-account-btn');
+      const accountFormSection = document.getElementById('account-form-section');
+      const accountFormTitle = document.getElementById('account-form-title');
+      const cancelAccountForm = document.getElementById('external-cancel-account-form');
+
+      // Tyto elementy budeme hledat dynamicky, protože jsou ve skryté sekci
+
+      // Kontrola existence základních elementů
+      if (!existingAccountsSelect || !addAccountBtn || !editAccountBtn || !deleteAccountBtn ||
+          !accountFormSection || !accountFormTitle) {
+        console.error('Některé základní elementy nebyly nalezeny:', {
+          existingAccountsSelect: !!existingAccountsSelect,
+          addAccountBtn: !!addAccountBtn,
+          editAccountBtn: !!editAccountBtn,
+          deleteAccountBtn: !!deleteAccountBtn,
+          accountFormSection: !!accountFormSection,
+          accountFormTitle: !!accountFormTitle,
+          cancelAccountForm: !!cancelAccountForm
+        });
+        return;
+      }
+
+      // Cancel button najdeme dynamicky, protože je ve skryté sekci
+
+      // Aktuální editovaný účet
+      let currentEditingAccount = null;
+
+      // Event listenery pro tlačítka
+      existingAccountsSelect.addEventListener('change', function() {
+        const selectedValue = this.value;
+        editAccountBtn.disabled = !selectedValue;
+        deleteAccountBtn.disabled = !selectedValue;
+      });
+
+      // Nastavit tlačítka při načtení stránky (pokud je vybrán výchozí účet)
+      const initialSelectedValue = existingAccountsSelect.value;
+      editAccountBtn.disabled = !initialSelectedValue;
+      deleteAccountBtn.disabled = !initialSelectedValue;
+
+      addAccountBtn.addEventListener('click', function() {
+        showAccountForm('add');
+      });
+
+      editAccountBtn.addEventListener('click', function() {
+        const selectedOption = existingAccountsSelect.selectedOptions[0];
+        if (selectedOption) {
+          showAccountForm('edit', selectedOption);
+        }
+      });
+
+      deleteAccountBtn.addEventListener('click', function() {
+        const selectedValue = existingAccountsSelect.value;
+        if (selectedValue && confirm('Opravdu chcete smazat tento bankovní účet?')) {
+          deleteAccount(selectedValue);
+        }
+      });
+
+      // Cancel button event listener se přidá dynamicky v showAccountForm
+
+      // Bank selector change event - přidáme dynamicky když se formulář zobrazí
+
+      // Submit formuláře - přidáme dynamicky když se formulář zobrazí
+
+      function showAccountForm(mode, selectedOption = null) {
+        // Najdeme externí formulář (mimo Symfony form)
+        const externalFormSection = document.getElementById('account-form-section');
+        const formTitle = document.getElementById('account-form-title');
+        const accountForm = document.getElementById('external-bank-account-form');
+
+        // Najdeme placeholder uvnitř Symfony formuláře
+        const placeholder = document.getElementById('account-form-placeholder');
+
+        if (!externalFormSection || !formTitle || !accountForm) {
+          showNotification('Chyba: Formulář nebyl nalezen', 'error');
+          return;
+        }
+
+        // Přesuneme formulář na místo placeholderu (pod select)
+        if (placeholder && placeholder.parentNode) {
+          placeholder.parentNode.insertBefore(externalFormSection, placeholder.nextSibling);
+        }
+
+        // Zobrazit formulář
+        externalFormSection.style.display = 'block';
+        if (placeholder) {
+          placeholder.style.display = 'none';
+        }
+
+        // Přidat event listenery pro formulář (pokud ještě nejsou)
+        if (!accountForm.hasAttribute('data-listeners-added')) {
+          accountForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveAccount();
+          });
+
+          // Cancel button event
+          const cancelBtn = document.getElementById('external-cancel-account-form');
+          if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+              hideAccountForm();
+            });
+          }
+
+          accountForm.setAttribute('data-listeners-added', 'true');
+        }
+
+        if (mode === 'add') {
+          formTitle.textContent = 'Přidat nový účet';
+          accountForm.reset();
+          const accountIdInput = document.getElementById('external-account-id');
+          if (accountIdInput) {
+            accountIdInput.value = '';
+          }
+          currentEditingAccount = null;
+        } else if (mode === 'edit' && selectedOption) {
+          formTitle.textContent = 'Editovat účet';
+          currentEditingAccount = selectedOption.value;
+
+          // Naplnit formulář daty
+          const accountIdInput = document.getElementById('external-account-id');
+          const accountNumberInput = document.getElementById('external-account-number');
+          const bankCodeInput = document.getElementById('external-bank-code');
+          const bankNameInput = document.getElementById('external-bank-name');
+          const ibanInput = document.getElementById('external-iban');
+          const swiftInput = document.getElementById('external-swift');
+          const isDefaultInput = document.getElementById('external-is-default');
+
+          if (accountIdInput) accountIdInput.value = selectedOption.value;
+          if (accountNumberInput) accountNumberInput.value = selectedOption.dataset.account || '';
+          if (bankCodeInput) bankCodeInput.value = selectedOption.dataset.bankCode || '';
+          if (bankNameInput) bankNameInput.value = selectedOption.dataset.bankName || '';
+          if (ibanInput) ibanInput.value = selectedOption.dataset.iban || '';
+          if (swiftInput) swiftInput.value = selectedOption.dataset.swift || '';
+          if (isDefaultInput) isDefaultInput.checked = selectedOption.dataset.isDefault === '1';
+        }
+      }
+
+      function hideAccountForm() {
+        const formSection = document.getElementById('account-form-section');
+        const placeholder = document.getElementById('account-form-placeholder');
+
+        if (formSection) {
+          formSection.style.display = 'none';
+        }
+        if (placeholder) {
+          placeholder.style.display = 'block';
+        }
+
+        const accountForm = document.getElementById('external-bank-account-form');
+        if (accountForm) {
+          accountForm.reset();
+        }
+        currentEditingAccount = null;
+      }
+
+      function saveAccount() {
+        const accountForm = document.getElementById('external-bank-account-form');
+        if (!accountForm) {
+          console.error('External accountForm element not found');
+          alert('Chyba: Externí formulář nebyl nalezen');
+          return;
+        }
+
+        const formData = new FormData(accountForm);
+        const accountId = formData.get('account_id');
+        const supplierId = {{ supplier.id }};
+
+        const isDefaultCheckbox = document.getElementById('external-is-default');
+        if (!isDefaultCheckbox) {
+          console.error('external-is-default checkbox not found');
+          alert('Chyba: Checkbox nebyl nalezen');
+          return;
+        }
+
+        // Připravit data pro odeslání
+        const data = {
+          supplier_id: supplierId,
+          account_number: formData.get('account_number'),
+          bank_code: formData.get('bank_code'),
+          bank_name: formData.get('bank_name'),
+          iban: formData.get('iban'),
+          swift: formData.get('swift'),
+          is_default: isDefaultCheckbox.checked
+        };
+
+        const url = accountId ? `/suppliers/${supplierId}/bank-accounts/${accountId}/update` : `/suppliers/${supplierId}/bank-accounts/create`;
+        const method = 'POST';
+
+        fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify(data)
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            // Aktualizovat select
+            updateAccountsSelect(data.account);
+            hideAccountForm();
+
+            // Zobrazit nenápadnou zprávu o úspěchu
+            showNotification(accountId ? 'Účet byl úspěšně aktualizován.' : 'Účet byl úspěšně přidán.', 'success');
+          } else {
+            showNotification('Chyba při ukládání účtu: ' + (data.message || 'Neznámá chyba'), 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showNotification('Chyba při komunikaci se serverem: ' + error.message, 'error');
+        });
+      }
+
+      function deleteAccount(accountId) {
+        const supplierId = {{ supplier.id }};
+
+        fetch(`/suppliers/${supplierId}/bank-accounts/${accountId}/delete`, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Odstranit z selectu
+            const option = existingAccountsSelect.querySelector(`option[value="${accountId}"]`);
+            if (option) {
+              option.remove();
+            }
+
+            // Resetovat tlačítka
+            editAccountBtn.disabled = true;
+            deleteAccountBtn.disabled = true;
+            existingAccountsSelect.value = '';
+
+            showNotification('Účet byl úspěšně smazán.', 'success');
+          } else {
+            showNotification('Chyba při mazání účtu: ' + (data.message || 'Neznámá chyba'), 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showNotification('Chyba při komunikaci se serverem.', 'error');
+        });
+      }
+
+      function updateAccountsSelect(account) {
+        const accountId = account.id;
+        const fullAccountNumber = account.account_number + (account.bank_code ? '/' + account.bank_code : '');
+        const displayText = fullAccountNumber + (account.bank_name ? ' (' + account.bank_name + ')' : '') + (account.is_default ? ' - Výchozí' : '');
+
+        // Najít existující option nebo vytvořit novou
+        let option = existingAccountsSelect.querySelector(`option[value="${accountId}"]`);
+        if (!option) {
+          option = document.createElement('option');
+          option.value = accountId;
+          existingAccountsSelect.appendChild(option);
+        }
+
+        // Aktualizovat data
+        option.textContent = displayText;
+        option.dataset.account = account.account_number;
+        option.dataset.bankCode = account.bank_code || '';
+        option.dataset.bankName = account.bank_name || '';
+        option.dataset.iban = account.iban || '';
+        option.dataset.swift = account.swift || '';
+        option.dataset.isDefault = account.is_default ? '1' : '0';
+
+        // Vybrat aktualizovanou option
+        existingAccountsSelect.value = accountId;
+        editAccountBtn.disabled = false;
+        deleteAccountBtn.disabled = false;
+      }
+
+      // Funkce pro zobrazování nenápadných notifikací
+      function showNotification(message, type = 'info') {
+        // Odstranit existující notifikace
+        const existingNotifications = document.querySelectorAll('.notification-toast');
+        existingNotifications.forEach(n => n.remove());
+
+        // Vytvořit novou notifikaci
+        const notification = document.createElement('div');
+        notification.className = `notification-toast alert alert-${type === 'success' ? 'success' : 'danger'}`;
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 9999;
+          min-width: 300px;
+          padding: 15px;
+          border-radius: 5px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        `;
+        notification.textContent = message;
+
+        // Přidat do stránky
+        document.body.appendChild(notification);
+
+        // Animace zobrazení
+        setTimeout(() => {
+          notification.style.opacity = '1';
+        }, 100);
+
+        // Automatické skrytí po 3 sekundách
+        setTimeout(() => {
+          notification.style.opacity = '0';
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification);
+            }
+          }, 300);
+        }, 3000);
+      }
+    });
+  </script>
 {% endblock %}
