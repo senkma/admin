@@ -3,11 +3,13 @@
 namespace App\Controller;
 
 use App\Entity\Invoice;
+use App\Entity\Supplier;
 use App\Form\InvoiceType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
 class InvoiceController extends AbstractController
@@ -143,5 +145,23 @@ class InvoiceController extends AbstractController
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="invoice_' . $invoice->getInvoiceNumber() . '.pdf"',
         ]);
+    }
+
+    #[Route('/api/suppliers/{id}/bank-accounts', name: 'api_supplier_bank_accounts', methods: ['GET'])]
+    public function getSupplierBankAccounts(Supplier $supplier): JsonResponse
+    {
+        $bankAccounts = [];
+        foreach ($supplier->getBankAccounts() as $bankAccount) {
+            $bankAccounts[] = [
+                'id' => $bankAccount->getId(),
+                'value' => $bankAccount->getId(),
+                'label' => $bankAccount->getFullAccountNumber() .
+                          ($bankAccount->getBankName() ? ' (' . $bankAccount->getBankName() . ')' : '') .
+                          ($bankAccount->isDefault() ? ' - Výchozí' : ''),
+                'isDefault' => $bankAccount->isDefault()
+            ];
+        }
+
+        return new JsonResponse($bankAccounts);
     }
 }

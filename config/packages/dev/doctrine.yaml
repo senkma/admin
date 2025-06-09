@@ -1,0 +1,4 @@
+doctrine:
+    orm:
+        # Use simple array cache for development
+        auto_generate_proxy_classes: true

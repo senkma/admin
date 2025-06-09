@@ -21,6 +21,7 @@
         <th>Číslo faktury</th>
         <th>Dodavatel</th>
         <th>Klient</th>
+        <th>Bankovní účet</th>
         <th>Datum vytvoření</th>
         <th>Datum splatnosti</th>
         <th>Akce</th>
@@ -33,6 +34,16 @@
           <td>{{ invoice.invoiceNumber }}</td>
           <td>{{ invoice.supplier.name }}</td>
           <td>{{ invoice.client.name }}</td>
+          <td>
+            {% if invoice.bankAccount %}
+              {{ invoice.bankAccount.fullAccountNumber }}
+              {% if invoice.bankAccount.bankName %}
+                ({{ invoice.bankAccount.bankName }})
+              {% endif %}
+            {% else %}
+              <em>Není vybrán</em>
+            {% endif %}
+          </td>
           <td>{{ invoice.dateCreated|date('d.m.Y') }}</td>
           <td>{{ invoice.dateDue|date('d.m.Y') }}</td>
           <td>

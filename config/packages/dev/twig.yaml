@@ -1,0 +1,3 @@
+twig:
+    auto_reload: true
+    cache: false

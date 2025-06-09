@@ -20,11 +20,15 @@
     </div>
     <div class="form-group">
       {{ form_label(form.supplier) }}
-      {{ form_widget(form.supplier, {'attr': {'class': 'form-control'}}) }}
+      {{ form_widget(form.supplier, {'attr': {'class': 'form-control', 'id': 'invoice_supplier'}}) }}
     </div>
     <div class="form-group">
       {{ form_label(form.client) }}
       {{ form_widget(form.client, {'attr': {'class': 'form-control'}}) }}
+    </div>
+    <div class="form-group">
+      {{ form_label(form.bankAccount) }}
+      {{ form_widget(form.bankAccount, {'attr': {'class': 'form-control'}}) }}
     </div>
     <h3>Položky faktury</h3>
 
@@ -194,6 +198,65 @@
 
     document.addEventListener('DOMContentLoaded', function () {
       calculateTotalPrice();
+    });
+  </script>
+
+  <script>
+    // JavaScript pro dynamické načítání bankovních účtů podle dodavatele
+    document.addEventListener('DOMContentLoaded', function() {
+      const supplierSelect = document.getElementById('invoice_supplier');
+      const bankAccountSelect = document.getElementById('invoice_bankAccount');
+
+      if (supplierSelect && bankAccountSelect) {
+        function loadBankAccounts(supplierId, autoSelectDefault = false) {
+          if (!supplierId) {
+            bankAccountSelect.innerHTML = '<option value="">-- Vyberte bankovní účet --</option>';
+            return;
+          }
+
+          // Načíst bankovní účty pro vybraného dodavatele
+          fetch(`/api/suppliers/${supplierId}/bank-accounts`)
+            .then(response => response.json())
+            .then(bankAccounts => {
+              // Vyčistit současné možnosti
+              bankAccountSelect.innerHTML = '<option value="">-- Vyberte bankovní účet --</option>';
+
+              let defaultAccountId = null;
+
+              bankAccounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = account.label;
+                bankAccountSelect.appendChild(option);
+
+                // Zapamatovat si výchozí účet
+                if (account.isDefault) {
+                  defaultAccountId = account.id;
+                }
+              });
+
+              // Automaticky vybrat výchozí účet pouze pokud je to požadováno
+              if (autoSelectDefault && defaultAccountId) {
+                bankAccountSelect.value = defaultAccountId;
+              }
+            })
+            .catch(error => {
+              console.error('Chyba při načítání bankovních účtů:', error);
+              bankAccountSelect.innerHTML = '<option value="">-- Chyba při načítání účtů --</option>';
+            });
+        }
+
+        supplierSelect.addEventListener('change', function() {
+          const supplierId = this.value;
+          // Při změně dodavatele automaticky vybrat výchozí účet
+          loadBankAccounts(supplierId, true);
+        });
+
+        // Spustit načítání při načtení stránky, ale nevybírat automaticky výchozí účet
+        if (supplierSelect.value) {
+          loadBankAccounts(supplierSelect.value, false);
+        }
+      }
     });
   </script>
 {% endblock %}

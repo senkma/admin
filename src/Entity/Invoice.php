@@ -32,6 +32,10 @@ class Invoice
     #[ORM\JoinColumn(nullable: false)]
     private ?Client $client = null;
 
+    #[ORM\ManyToOne(targetEntity: BankAccount::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?BankAccount $bankAccount = null;
+
     #[ORM\OneToMany(mappedBy: 'invoice', targetEntity: InvoiceItem::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $items;
 
@@ -101,6 +105,18 @@ class Invoice
     public function setClient(?Client $client): self
     {
         $this->client = $client;
+
+        return $this;
+    }
+
+    public function getBankAccount(): ?BankAccount
+    {
+        return $this->bankAccount;
+    }
+
+    public function setBankAccount(?BankAccount $bankAccount): self
+    {
+        $this->bankAccount = $bankAccount;
 
         return $this;
     }

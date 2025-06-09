@@ -128,7 +128,20 @@
   <div class="payment">
     <h3>Informace k platbě</h3>
     <p>Způsob úhrady: Bankovním převodem</p>
-    <p>Bankovní účet: {{ invoice.supplier.bankAccount }}</p>
+    {% if invoice.bankAccount %}
+      <p>Bankovní účet: {{ invoice.bankAccount.fullAccountNumber }}</p>
+      {% if invoice.bankAccount.bankName %}
+        <p>Název banky: {{ invoice.bankAccount.bankName }}</p>
+      {% endif %}
+      {% if invoice.bankAccount.iban %}
+        <p>IBAN: {{ invoice.bankAccount.iban }}</p>
+      {% endif %}
+      {% if invoice.bankAccount.swift %}
+        <p>SWIFT: {{ invoice.bankAccount.swift }}</p>
+      {% endif %}
+    {% else %}
+      <p>Bankovní účet: <em>Není specifikován</em></p>
+    {% endif %}
     <p>Variabilní symbol: {{ invoice.client.variableSymbol }}</p>
     <br>
     <p>Datum vytvoření: {{ invoice.dateCreated|date('d.m.Y') }}</p>

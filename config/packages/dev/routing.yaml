@@ -1,0 +1,5 @@
+framework:
+    router:
+        # Enable route caching in dev for better performance
+        # but disable strict requirements for easier development
+        strict_requirements: false
