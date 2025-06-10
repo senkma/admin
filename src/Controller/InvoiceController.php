@@ -147,21 +147,4 @@ class InvoiceController extends AbstractController
         ]);
     }
 
-    #[Route('/api/suppliers/{id}/bank-accounts', name: 'api_supplier_bank_accounts', methods: ['GET'])]
-    public function getSupplierBankAccounts(Supplier $supplier): JsonResponse
-    {
-        $bankAccounts = [];
-        foreach ($supplier->getBankAccounts() as $bankAccount) {
-            $bankAccounts[] = [
-                'id' => $bankAccount->getId(),
-                'value' => $bankAccount->getId(),
-                'label' => $bankAccount->getFullAccountNumber() .
-                          ($bankAccount->getBankName() ? ' (' . $bankAccount->getBankName() . ')' : '') .
-                          ($bankAccount->isDefault() ? ' - Výchozí' : ''),
-                'isDefault' => $bankAccount->isDefault()
-            ];
-        }
-
-        return new JsonResponse($bankAccounts);
-    }
 }

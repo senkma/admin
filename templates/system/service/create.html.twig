@@ -1,0 +1,354 @@
+{% extends 'system/base_system.html.twig' %}
+
+{% block title %}Nová automatická služba{% endblock %}
+
+{% block body %}
+  <div class="form-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h1>Nová automatická služba</h1>
+      <a href="{{ path('service_index') }}" class="btn">Zpět na seznam</a>
+    </div>
+    {{ form_start(form) }}
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+      <div>
+        {{ form_label(form.name) }}
+        {{ form_widget(form.name) }}
+        {{ form_errors(form.name) }}
+      </div>
+      <div>
+        {{ form_label(form.isActive) }}
+        {{ form_widget(form.isActive) }}
+        {{ form_errors(form.isActive) }}
+      </div>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+      {{ form_label(form.description) }}
+      {{ form_widget(form.description) }}
+      {{ form_errors(form.description) }}
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+      <div>
+        {{ form_label(form.supplier) }}
+        {{ form_widget(form.supplier, {'attr': {'id': 'service_supplier'}}) }}
+        {{ form_errors(form.supplier) }}
+      </div>
+      <div>
+        {{ form_label(form.client) }}
+        {{ form_widget(form.client) }}
+        {{ form_errors(form.client) }}
+      </div>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+      {{ form_label(form.bankAccount) }}
+      {{ form_widget(form.bankAccount) }}
+      {{ form_errors(form.bankAccount) }}
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+      <div>
+        {{ form_label(form.frequency) }}
+        {{ form_widget(form.frequency) }}
+        {{ form_errors(form.frequency) }}
+      </div>
+      <div>
+        {{ form_label(form.invoiceDay) }}
+        {{ form_widget(form.invoiceDay) }}
+        {{ form_errors(form.invoiceDay) }}
+        <small style="color: #666; font-size: 0.875rem;">{{ form_help(form.invoiceDay) }}</small>
+      </div>
+      <div>
+        {{ form_label(form.dueDays) }}
+        {{ form_widget(form.dueDays) }}
+        {{ form_errors(form.dueDays) }}
+        <small style="color: #666; font-size: 0.875rem;">{{ form_help(form.dueDays) }}</small>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+      <div>
+        {{ form_label(form.startDate) }}
+        {{ form_widget(form.startDate) }}
+        {{ form_errors(form.startDate) }}
+        <small style="color: #666; font-size: 0.875rem;">{{ form_help(form.startDate) }}</small>
+      </div>
+      <div>
+        {{ form_label(form.endDate) }}
+        {{ form_widget(form.endDate) }}
+        {{ form_errors(form.endDate) }}
+        <small style="color: #666; font-size: 0.875rem;">{{ form_help(form.endDate) }}</small>
+      </div>
+    </div>
+
+    <h3 style="margin: 2rem 0 1rem 0;">Položky služby</h3>
+
+    <table class="service-items-table" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background-color: #f8f9fa;">
+          <th style="padding: 0.75rem; border: 1px solid #dee2e6; text-align: left;">Popis</th>
+          <th style="padding: 0.75rem; border: 1px solid #dee2e6; text-align: left;">Množství</th>
+          <th style="padding: 0.75rem; border: 1px solid #dee2e6; text-align: left;">Cena/jednotku</th>
+          <th id="vat-header" style="padding: 0.75rem; border: 1px solid #dee2e6; text-align: left; display: none;">DPH (%)</th>
+          <th style="padding: 0.75rem; border: 1px solid #dee2e6; text-align: left;">Celkem</th>
+          <th style="padding: 0.75rem; border: 1px solid #dee2e6; text-align: center;">Akce</th>
+        </tr>
+      </thead>
+      <tbody id="service-items" data-prototype="{{ form_widget(form.items.vars.prototype)|e('html_attr') }}">
+        {% for item in form.items %}
+          <tr class="service-item-row">
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">{{ form_widget(item.description, {'attr': {'class': 'form-control'}}) }}</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">{{ form_widget(item.quantity, {'attr': {'class': 'form-control quantity-input'}}) }}</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6;">{{ form_widget(item.unitPrice, {'attr': {'class': 'form-control unit-price-input'}}) }}</td>
+            <td class="vat-cell" style="padding: 0.5rem; border: 1px solid #dee2e6; display: none;">{{ form_widget(item.vatRate, {'attr': {'class': 'form-control vat-rate-input'}}) }}</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6; text-align: right;" class="item-total">0.00</td>
+            <td style="padding: 0.5rem; border: 1px solid #dee2e6; text-align: center;">
+              <button type="button" class="btn remove-item" style="background-color: #dc3545; color: white; padding: 0.375rem 0.625rem; border: none; border-radius: 0.25rem; font-size: 0.8rem;">Odstranit</button>
+            </td>
+            {{ form_widget(item.unit, {'attr': {'style': 'display: none;'}}) }}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <button type="button" id="add-item" class="btn" style="background-color: #28a745; color: white; margin: 1rem 0;">Přidat položku</button>
+
+    <div style="margin-top: 2rem;">
+      <button type="submit" class="btn" style="margin-right: 0.5rem;">Uložit službu</button>
+      <a href="{{ path('service_index') }}" class="btn">Zrušit</a>
+    </div>
+
+    {{ form_end(form) }}
+  </div>
+
+  <script>
+    // JavaScript pro dynamické načítání bankovních účtů podle dodavatele a splatnosti podle klienta
+    document.addEventListener('DOMContentLoaded', function() {
+      const supplierSelect = document.getElementById('service_supplier');
+      const bankAccountSelect = document.getElementById('service_bankAccount');
+      const clientSelect = document.getElementById('service_client');
+      const dueDaysInput = document.getElementById('service_dueDays');
+
+      if (supplierSelect && bankAccountSelect) {
+        function loadBankAccounts(supplierId, autoSelectDefault = false) {
+          if (!supplierId) {
+            bankAccountSelect.innerHTML = '<option value="">-- Vyberte bankovní účet --</option>';
+            return;
+          }
+
+          fetch(`/api/suppliers/${supplierId}/bank-accounts`)
+            .then(response => response.json())
+            .then(bankAccounts => {
+              bankAccountSelect.innerHTML = '<option value="">-- Vyberte bankovní účet --</option>';
+
+              let defaultAccountId = null;
+
+              bankAccounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = account.label;
+                bankAccountSelect.appendChild(option);
+
+                if (account.isDefault) {
+                  defaultAccountId = account.id;
+                }
+              });
+
+              if (autoSelectDefault && defaultAccountId) {
+                bankAccountSelect.value = defaultAccountId;
+              }
+            })
+            .catch(error => {
+              console.error('Chyba při načítání bankovních účtů:', error);
+              bankAccountSelect.innerHTML = '<option value="">-- Chyba při načítání účtů --</option>';
+            });
+        }
+
+        supplierSelect.addEventListener('change', function() {
+          const supplierId = this.value;
+          loadBankAccounts(supplierId, true);
+          checkSupplierVatStatus(supplierId);
+        });
+
+        if (supplierSelect.value) {
+          loadBankAccounts(supplierSelect.value, false);
+          checkSupplierVatStatus(supplierSelect.value);
+        }
+
+        // Funkce pro kontrolu DPH dodavatele
+        function checkSupplierVatStatus(supplierId) {
+          if (!supplierId) {
+            toggleVatColumns(false);
+            return;
+          }
+
+          fetch(`/api/suppliers/${supplierId}/vat-status`)
+            .then(response => response.json())
+            .then(data => {
+              toggleVatColumns(data.isVatPayer);
+            })
+            .catch(error => {
+              console.error('Chyba při načítání DPH statusu dodavatele:', error);
+              toggleVatColumns(false);
+            });
+        }
+
+        // Funkce pro zobrazení/skrytí DPH sloupců
+        function toggleVatColumns(show) {
+          const vatHeader = document.getElementById('vat-header');
+          const vatCells = document.querySelectorAll('.vat-cell');
+          const vatInputs = document.querySelectorAll('.vat-rate-input');
+
+          if (vatHeader) {
+            vatHeader.style.display = show ? 'table-cell' : 'none';
+          }
+
+          vatCells.forEach(cell => {
+            cell.style.display = show ? 'table-cell' : 'none';
+          });
+
+          // Nastavit výchozí hodnotu pro skrytá pole
+          vatInputs.forEach(input => {
+            if (!show && (!input.value || input.value === '')) {
+              input.value = '21.00';
+            }
+          });
+        }
+      }
+
+      // JavaScript pro načítání splatnosti z klienta
+      if (clientSelect && dueDaysInput) {
+        function loadClientDueDays(clientId) {
+          if (!clientId) {
+            return;
+          }
+
+          fetch(`/api/clients/${clientId}/due-days`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.dueDays) {
+                dueDaysInput.value = data.dueDays;
+              }
+            })
+            .catch(error => {
+              console.error('Chyba při načítání splatnosti klienta:', error);
+            });
+        }
+
+        clientSelect.addEventListener('change', function() {
+          const clientId = this.value;
+          loadClientDueDays(clientId);
+        });
+      }
+
+      // JavaScript pro správu položek služby
+      const itemsContainer = document.getElementById('service-items');
+      const addButton = document.getElementById('add-item');
+      let index = itemsContainer.querySelectorAll('tr').length;
+
+      addButton.addEventListener('click', function() {
+        const prototype = itemsContainer.dataset.prototype;
+        const newItem = prototype.replace(/__name__/g, index);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newItem;
+
+        // Vytvoření nového řádku tabulky
+        const row = document.createElement('tr');
+        row.className = 'service-item-row';
+
+        // Přidání jednotlivých buněk
+        ['description', 'quantity', 'unitPrice'].forEach(field => {
+          const input = tempDiv.querySelector(`[name*="[${field}]"]`);
+          if (input) {
+            input.classList.add('form-control');
+            if (field === 'quantity') input.classList.add('quantity-input');
+            if (field === 'unitPrice') input.classList.add('unit-price-input');
+
+            const cell = document.createElement('td');
+            cell.style.cssText = 'padding: 0.5rem; border: 1px solid #dee2e6;';
+            cell.appendChild(input);
+            row.appendChild(cell);
+          }
+        });
+
+        // Přidání DPH buňky (podmíněně)
+        const vatInput = tempDiv.querySelector(`[name*="[vatRate]"]`);
+        if (vatInput) {
+          vatInput.classList.add('form-control', 'vat-rate-input');
+          const vatCell = document.createElement('td');
+          vatCell.className = 'vat-cell';
+          const vatHeader = document.getElementById('vat-header');
+          const isVatVisible = vatHeader && vatHeader.style.display !== 'none';
+          vatCell.style.cssText = `padding: 0.5rem; border: 1px solid #dee2e6; display: ${isVatVisible ? 'table-cell' : 'none'};`;
+
+          // Nastavit výchozí hodnotu pro skrytá pole
+          if (!isVatVisible && (!vatInput.value || vatInput.value === '')) {
+            vatInput.value = '21.00';
+          }
+
+          vatCell.appendChild(vatInput);
+          row.appendChild(vatCell);
+        }
+
+        // Skrytý input pro jednotku
+        const unitInput = tempDiv.querySelector(`[name*="[unit]"]`);
+        if (unitInput) {
+          unitInput.style.display = 'none';
+          row.appendChild(unitInput);
+        }
+
+        // Přidání sloupce "Celkem"
+        const totalCell = document.createElement('td');
+        totalCell.className = 'item-total';
+        totalCell.style.cssText = 'padding: 0.5rem; border: 1px solid #dee2e6; text-align: right;';
+        totalCell.textContent = '0.00';
+        row.appendChild(totalCell);
+
+        // Přidání tlačítka "Odstranit"
+        const actionCell = document.createElement('td');
+        actionCell.style.cssText = 'padding: 0.5rem; border: 1px solid #dee2e6; text-align: center;';
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'btn remove-item';
+        removeButton.style.cssText = 'background-color: #dc3545; color: white; padding: 0.375rem 0.625rem; border: none; border-radius: 0.25rem; font-size: 0.8rem;';
+        removeButton.innerHTML = 'Odstranit';
+        actionCell.appendChild(removeButton);
+        row.appendChild(actionCell);
+
+        itemsContainer.appendChild(row);
+        index++;
+      });
+
+      // Odstranění řádku
+      document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-item') || e.target.closest('.remove-item')) {
+          e.preventDefault();
+          const row = e.target.closest('tr');
+          if (row) {
+            row.remove();
+          }
+        }
+      });
+
+      // Výpočet celkové ceny pro řádek
+      document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('quantity-input') || e.target.classList.contains('unit-price-input')) {
+          const row = e.target.closest('tr');
+          const quantityInput = row.querySelector('.quantity-input');
+          const priceInput = row.querySelector('.unit-price-input');
+          const totalCell = row.querySelector('.item-total');
+
+          const quantity = parseFloat(quantityInput.value) || 0;
+          const price = parseFloat(priceInput.value) || 0;
+          const total = (quantity * price).toFixed(2);
+
+          if (totalCell) {
+            totalCell.textContent = total;
+          }
+        }
+      });
+    });
+  </script>
+{% endblock %}

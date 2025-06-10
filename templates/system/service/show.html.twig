@@ -1,0 +1,272 @@
+{% extends 'system/base_system.html.twig' %}
+
+{% block title %}{{ service.name }}{% endblock %}
+
+{% block body %}
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h1>{{ service.name }}</h1>
+    <div>
+      <a href="{{ path('service_edit', {'id': service.id}) }}" class="btn" style="margin-right: 0.5rem;">Editovat</a>
+      <a href="{{ path('service_index') }}" class="btn">Zpět na seznam</a>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <div>
+      <div class="form-container" style="margin-bottom: 2rem;">
+        <h3>Informace o službě</h3>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1rem;">
+          <div>
+            <strong>Název:</strong><br>
+            {{ service.name }}
+          </div>
+          <div>
+            <strong>Status:</strong><br>
+            {% if service.isActive %}
+              <span style="background-color: #28a745; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem;">Aktivní</span>
+            {% else %}
+              <span style="background-color: #6c757d; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem;">Neaktivní</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if service.description %}
+          <div style="margin-bottom: 1rem;">
+            <strong>Popis:</strong><br>
+            {{ service.description|nl2br }}
+          </div>
+        {% endif %}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1rem;">
+          <div>
+            <strong>Dodavatel:</strong><br>
+            {{ service.supplier.name }}
+          </div>
+          <div>
+            <strong>Klient:</strong><br>
+            {{ service.client.name }}
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <strong>Bankovní účet:</strong><br>
+          {% if service.bankAccount %}
+            {{ service.bankAccount.fullAccountNumber }}
+            {% if service.bankAccount.bankName %}
+              ({{ service.bankAccount.bankName }})
+            {% endif %}
+            {% if service.bankAccount.isDefault %}
+              <span style="background-color: #007bff; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem;">Výchozí</span>
+            {% endif %}
+          {% else %}
+            <em style="color: #666;">Není vybrán</em>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="table-container">
+        <h3>Položky služby</h3>
+        {% if service.items|length > 0 %}
+          <table>
+            <thead>
+              <tr>
+                <th>Popis</th>
+                <th>Množství</th>
+                <th>Jednotka</th>
+                <th>Cena/jednotku</th>
+                <th>DPH (%)</th>
+                <th style="text-align: right;">Celkem bez DPH</th>
+                <th style="text-align: right;">Celkem s DPH</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% set totalWithoutVat = 0 %}
+              {% set totalWithVat = 0 %}
+              {% for item in service.items %}
+                {% set itemTotal = item.totalPrice %}
+                {% set itemTotalWithVat = item.totalPriceWithVat %}
+                {% set totalWithoutVat = totalWithoutVat + itemTotal %}
+                {% set totalWithVat = totalWithVat + itemTotalWithVat %}
+                <tr>
+                  <td>{{ item.description }}</td>
+                  <td>{{ item.quantity }}</td>
+                  <td>{{ item.unit ?? '-' }}</td>
+                  <td>{{ item.unitPrice|number_format(2, ',', ' ') }} Kč</td>
+                  <td>{{ item.vatRate }}%</td>
+                  <td style="text-align: right;">{{ itemTotal|number_format(2, ',', ' ') }} Kč</td>
+                  <td style="text-align: right;">{{ itemTotalWithVat|number_format(2, ',', ' ') }} Kč</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr style="font-weight: bold; background-color: #f8f9fa;">
+                <th colspan="5">Celkem:</th>
+                <th style="text-align: right;">{{ totalWithoutVat|number_format(2, ',', ' ') }} Kč</th>
+                <th style="text-align: right;">{{ totalWithVat|number_format(2, ',', ' ') }} Kč</th>
+              </tr>
+            </tfoot>
+          </table>
+        {% else %}
+          <div style="text-align: center; padding: 2rem;">
+            <p style="color: #666; font-size: 1.2rem;">Žádné položky</p>
+            <p style="color: #666;">Služba nemá definované žádné položky.</p>
+            <a href="{{ path('service_edit', {'id': service.id}) }}" class="btn">Přidat položky</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div>
+      <div class="form-container" style="margin-bottom: 2rem;">
+        <h3>Nastavení fakturace</h3>
+
+        <div style="margin-bottom: 1rem;">
+          <strong>Frekvence:</strong><br>
+          {% if service.frequency == 'monthly' %}
+            <span style="background-color: #007bff; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem;">Měsíčně</span>
+          {% elseif service.frequency == 'quarterly' %}
+            <span style="background-color: #17a2b8; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem;">Čtvrtletně</span>
+          {% elseif service.frequency == 'yearly' %}
+            <span style="background-color: #ffc107; color: #212529; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem;">Ročně</span>
+          {% endif %}
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <strong>Den fakturace:</strong><br>
+          {{ service.invoiceDay }}. den v měsíci
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <strong>Splatnost:</strong><br>
+          {{ service.dueDays }} dní od vytvoření
+        </div>
+
+        {% if service.startDate %}
+          <div style="margin-bottom: 1rem;">
+            <strong>Začátek služby:</strong><br>
+            {{ service.startDate|date('d.m.Y') }}
+          </div>
+        {% endif %}
+
+        {% if service.endDate %}
+          <div style="margin-bottom: 1rem;">
+            <strong>Konec služby:</strong><br>
+            {{ service.endDate|date('d.m.Y') }}
+          </div>
+        {% else %}
+          <div style="margin-bottom: 1rem;">
+            <strong>Konec služby:</strong><br>
+            <em style="color: #666;">Nekonečně</em>
+          </div>
+        {% endif %}
+
+        {% if service.lastInvoiceDate %}
+          <div style="margin-bottom: 1rem;">
+            <strong>Poslední faktura:</strong><br>
+            {{ service.lastInvoiceDate|date('d.m.Y') }}
+          </div>
+        {% else %}
+          <div style="margin-bottom: 1rem;">
+            <strong>Poslední faktura:</strong><br>
+            <em style="color: #666;">Zatím žádná</em>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="form-container" style="margin-bottom: 2rem;">
+        <h3>Časové údaje</h3>
+
+        <div style="margin-bottom: 1rem;">
+          <strong>Vytvořeno:</strong><br>
+          {{ service.createdAt|date('d.m.Y H:i') }}
+        </div>
+
+        {% if service.updatedAt %}
+          <div style="margin-bottom: 1rem;">
+            <strong>Aktualizováno:</strong><br>
+            {{ service.updatedAt|date('d.m.Y H:i') }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="form-container">
+        <h3>Akce</h3>
+
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <button type="button" class="btn" style="background-color: #28a745; color: white;"
+                  onclick="executeService({{ service.id }})">
+            ⚡ Vyvolat službu
+          </button>
+
+          <button type="button" class="btn" style="background-color: {% if service.isActive %}#ffc107{% else %}#28a745{% endif %};"
+                  onclick="toggleActive({{ service.id }}, {{ service.isActive ? 'false' : 'true' }})">
+            {% if service.isActive %}⏸️ Deaktivovat{% else %}▶️ Aktivovat{% endif %}
+          </button>
+
+          <a href="{{ path('service_edit', {'id': service.id}) }}" class="btn">
+            ✏️ Editovat službu
+          </a>
+
+          <form method="post" action="{{ path('service_delete', {'id': service.id}) }}"
+                onsubmit="return confirm('Opravdu chcete smazat tuto službu?')">
+            <button type="submit" class="btn" style="background-color: #dc3545; color: white; width: 100%;">
+              🗑️ Smazat službu
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleActive(serviceId, newStatus) {
+      fetch(`/services/${serviceId}/toggle-active`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Chyba při změně statusu služby.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Chyba při komunikaci se serverem.');
+      });
+    }
+
+    function executeService(serviceId) {
+      if (!confirm('Opravdu chcete vyvolat tuto službu a vytvořit fakturu?')) {
+        return;
+      }
+
+      fetch(`/services/${serviceId}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert('Chyba: ' + (data.message || 'Nepodařilo se vyvolat službu.'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Chyba při komunikaci se serverem.');
+      });
+    }
+  </script>
+{% endblock %}

@@ -51,6 +51,9 @@ class Client
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
+    #[ORM\Column(type: 'integer', options: ['default' => 14])]
+    private ?int $dueDays = 14;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -196,6 +199,18 @@ class Client
     public function setUser(User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getDueDays(): ?int
+    {
+        return $this->dueDays;
+    }
+
+    public function setDueDays(int $dueDays): self
+    {
+        $this->dueDays = $dueDays;
 
         return $this;
     }

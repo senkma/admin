@@ -186,6 +186,42 @@ class SupplierController extends AbstractController
         }
     }
 
+    #[Route('/api/suppliers/{id}/vat-status', name: 'api_supplier_vat_status', methods: ['GET'])]
+    public function getSupplierVatStatus(Supplier $supplier): JsonResponse
+    {
+        // Zkontrolovat, jestli dodavatel patří aktuálnímu uživateli
+        if ($supplier->getUser() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Nemáte oprávnění zobrazit údaje tohoto dodavatele.');
+        }
+
+        return new JsonResponse([
+            'isVatPayer' => $supplier->isVatPayer()
+        ]);
+    }
+
+    #[Route('/api/suppliers/{id}/bank-accounts', name: 'api_supplier_bank_accounts', methods: ['GET'])]
+    public function getSupplierBankAccounts(Supplier $supplier): JsonResponse
+    {
+        // Zkontrolovat, jestli dodavatel patří aktuálnímu uživateli
+        if ($supplier->getUser() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Nemáte oprávnění zobrazit údaje tohoto dodavatele.');
+        }
+
+        $bankAccounts = [];
+        foreach ($supplier->getBankAccounts() as $bankAccount) {
+            $bankAccounts[] = [
+                'id' => $bankAccount->getId(),
+                'value' => $bankAccount->getId(),
+                'label' => $bankAccount->getFullAccountNumber() .
+                          ($bankAccount->getBankName() ? ' (' . $bankAccount->getBankName() . ')' : '') .
+                          ($bankAccount->isDefault() ? ' - Výchozí' : ''),
+                'isDefault' => $bankAccount->isDefault()
+            ];
+        }
+
+        return new JsonResponse($bankAccounts);
+    }
+
     private function unsetDefaultBankAccounts(Supplier $supplier, EntityManagerInterface $entityManager, BankAccount $excludeAccount = null): void
     {
         $bankAccounts = $supplier->getBankAccounts();

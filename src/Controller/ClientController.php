@@ -6,6 +6,7 @@ use App\Entity\Client;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use App\Form\ClientType;
@@ -68,5 +69,18 @@ class ClientController extends AbstractController
         $entityManager->flush();
 
         return $this->redirectToRoute('client_index');
+    }
+
+    #[Route('/api/clients/{id}/due-days', name: 'api_client_due_days', methods: ['GET'])]
+    public function getClientDueDays(Client $client): JsonResponse
+    {
+        // Zkontrolovat, jestli klient patří aktuálnímu uživateli
+        if ($client->getUser() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Nemáte oprávnění zobrazit údaje tohoto klienta.');
+        }
+
+        return new JsonResponse([
+            'dueDays' => $client->getDueDays()
+        ]);
     }
 }

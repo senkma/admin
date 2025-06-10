@@ -5,6 +5,7 @@ namespace App\Form;
 use App\Entity\Client;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -23,7 +24,16 @@ class ClientType extends AbstractType
             ->add('dic', TextType::class, ['label' => 'DIČ', 'required' => false])
             ->add('ico', TextType::class, ['label' => 'IČO', 'required' => false])
             ->add('variable_symbol', TextType::class, ['label' => 'Variabilní symbol', 'required' => false])
-            ->add('description', TextType::class, ['label' => 'Popis', 'required' => false]);
+            ->add('description', TextType::class, ['label' => 'Popis', 'required' => false])
+            ->add('dueDays', IntegerType::class, [
+                'label' => 'Splatnost (dny)',
+                'attr' => [
+                    'min' => 1,
+                    'max' => 365,
+                    'placeholder' => '14'
+                ],
+                'help' => 'Počet dní splatnosti pro faktury tohoto klienta'
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
