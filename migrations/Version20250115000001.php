@@ -50,7 +50,16 @@ final class Version20250115000001 extends AbstractMigration
         $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD2A76ED395 FOREIGN KEY (user_id) REFERENCES users (id)');
         $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD22ADD6D8C FOREIGN KEY (supplier_id) REFERENCES supplier (id)');
         $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD219EB6921 FOREIGN KEY (client_id) REFERENCES client (id)');
-        $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD212CB990C FOREIGN KEY (bank_account_id) REFERENCES bank_account (id)');
+
+        // Add bank_account foreign key only if bank_account table exists
+        $connection = $this->connection;
+        $schemaManager = $connection->createSchemaManager();
+        $tables = $schemaManager->listTableNames();
+
+        if (in_array('bank_account', $tables)) {
+            $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD212CB990C FOREIGN KEY (bank_account_id) REFERENCES bank_account (id)');
+        }
+
         $this->addSql('ALTER TABLE service_item ADD CONSTRAINT FK_3D0B2DDED5CA9E6 FOREIGN KEY (service_id) REFERENCES service (id)');
 
         $this->addSql('CREATE INDEX IDX_E19D9AD2A76ED395 ON service (user_id)');
