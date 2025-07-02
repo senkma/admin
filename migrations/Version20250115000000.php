@@ -20,9 +20,9 @@ final class Version20250115000000 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE invoice ADD COLUMN IF NOT EXISTS bank_account_id INT DEFAULT NULL');
+        $this->addSql('ALTER IGNORE TABLE invoice ADD bank_account_id INT DEFAULT NULL');
+        $this->addSql('ALTER IGNORE TABLE invoice ADD CONSTRAINT FK_9065174412CB990C FOREIGN KEY (bank_account_id) REFERENCES bank_account (id)');
         $this->addSql('CREATE INDEX IF NOT EXISTS IDX_9065174412CB990C ON invoice (bank_account_id)');
-        $this->addSql('ALTER TABLE invoice ADD CONSTRAINT IF NOT EXISTS FK_9065174412CB990C FOREIGN KEY (bank_account_id) REFERENCES bank_account (id)');
     }
 
     public function down(Schema $schema): void
