@@ -133,6 +133,12 @@ class ServiceType extends AbstractType
                 'allow_delete' => true,
                 'by_reference' => false,
                 'label' => 'Položky služby',
+            ])
+            ->add('sendEmail', CheckboxType::class, [
+                'label' => 'Odeslat email při vykonání služby',
+                'required' => false,
+                'attr' => ['class' => 'form-check-input'],
+                'help' => 'Pokud je zaškrtnuto, při vykonání služby se automaticky vytvoří komunikace a odešle email s fakturou',
             ]);
     }
 

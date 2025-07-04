@@ -20,7 +20,7 @@ class InvoiceItem
     private ?int $quantity = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $price_per_unit = null;
+    private ?string $price_per_unit = null;
 
     #[ORM\ManyToOne(targetEntity: Invoice::class, inversedBy: 'items')]
     #[ORM\JoinColumn(nullable: false)]
@@ -55,12 +55,12 @@ class InvoiceItem
         return $this;
     }
 
-    public function getPricePerUnit(): ?float
+    public function getPricePerUnit(): ?string
     {
         return $this->price_per_unit;
     }
 
-    public function setPricePerUnit(float $price_per_unit): self
+    public function setPricePerUnit(string $price_per_unit): self
     {
         $this->price_per_unit = $price_per_unit;
 

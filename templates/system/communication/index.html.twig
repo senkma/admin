@@ -1,0 +1,150 @@
+{% extends 'system/base_system.html.twig' %}
+
+{% block title %}Komunikace{% endblock %}
+
+{% block body %}
+  <div class="table-container">
+    <h2>Seznam komunikací</h2>
+    
+    <div style="margin-bottom: 1rem; display: flex; gap: 1rem;">
+      <a href="{{ path('communication_new') }}" class="btn btn-primary">Vytvořit novou komunikaci</a>
+      <button type="button" class="btn" style="background-color: #17a2b8; color: white;" onclick="sendDailyEmails()">
+        📧 Odeslat všechny připravené
+      </button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Email</th>
+          <th>Zpráva</th>
+          <th>Dodavatel</th>
+          <th>Klient</th>
+          <th>Služba</th>
+          <th>Faktura</th>
+          <th>Status</th>
+          <th>Vytvořeno</th>
+          <th>Odesláno</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for communication in communications %}
+          <tr>
+            <td>{{ communication.id }}</td>
+            <td>{{ communication.email }}</td>
+            <td>
+              {% if communication.message|length > 50 %}
+                {{ communication.message|slice(0, 50) }}...
+              {% else %}
+                {{ communication.message }}
+              {% endif %}
+            </td>
+            <td>{{ communication.supplier ? communication.supplier.name : '-' }}</td>
+            <td>{{ communication.client ? communication.client.name : '-' }}</td>
+            <td>{{ communication.service ? communication.service.name : '-' }}</td>
+            <td>{{ communication.invoice ? communication.invoice.invoiceNumber : '-' }}</td>
+            <td>
+              <span style="background-color: {{ communication.statusColor }}; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem;">
+                {{ communication.statusLabel }}
+              </span>
+            </td>
+            <td>{{ communication.createdAt|date('d.m.Y H:i') }}</td>
+            <td>{{ communication.sentAt ? communication.sentAt|date('d.m.Y H:i') : '-' }}</td>
+            <td>
+              <div style="display: flex; gap: 0.5rem;">
+                {% if communication.status == 'pripraveno' %}
+                  <button type="button" class="btn btn-sm" style="background-color: #28a745; color: white;" 
+                          onclick="executeCommunication({{ communication.id }})" title="Vykonat">
+                    ⚡ Vykonat
+                  </button>
+                {% endif %}
+                
+                <a href="{{ path('communication_show', {'id': communication.id}) }}" 
+                   class="btn btn-sm" style="background-color: #17a2b8; color: white;" title="Zobrazit">
+                  👁️ Zobrazit
+                </a>
+                
+                <a href="{{ path('communication_edit', {'id': communication.id}) }}" 
+                   class="btn btn-sm" style="background-color: #ffc107; color: #212529;" title="Editovat">
+                  ✏️ Editovat
+                </a>
+                
+                <form method="post" action="{{ path('communication_delete', {'id': communication.id}) }}" 
+                      style="display: inline;" onsubmit="return confirm('Opravdu chcete smazat tuto komunikaci?')">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ communication.id) }}">
+                  <button type="submit" class="btn btn-sm" style="background-color: #dc3545; color: white;" title="Smazat">
+                    🗑️ Smazat
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="11" style="text-align: center; padding: 2rem; color: #6c757d;">
+              Žádné komunikace nebyly nalezeny.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    function executeCommunication(communicationId) {
+      if (!confirm('Opravdu chcete odeslat tento email?')) {
+        return;
+      }
+
+      fetch(`/communications/${communicationId}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert('Chyba: ' + (data.message || 'Nepodařilo se odeslat email.'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Chyba při komunikaci se serverem.');
+      });
+    }
+
+    function sendDailyEmails() {
+      if (!confirm('Opravdu chcete odeslat všechny připravené emaily?')) {
+        return;
+      }
+
+      fetch('/communications/send-daily', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert('Chyba: ' + (data.message || 'Nepodařilo se odeslat emaily.'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Chyba při komunikaci se serverem.');
+      });
+    }
+  </script>
+{% endblock %}

@@ -67,11 +67,15 @@ class Service
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $updatedAt = null;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $sendEmail = false;
+
     public function __construct()
     {
         $this->items = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->isActive = true;
+        $this->sendEmail = false;
     }
 
     public function getId(): ?int
@@ -337,5 +341,16 @@ class Service
         $dueDate = clone $invoiceDate;
         $dueDate->modify('+' . $this->dueDays . ' days');
         return $dueDate;
+    }
+
+    public function getSendEmail(): bool
+    {
+        return $this->sendEmail;
+    }
+
+    public function setSendEmail(bool $sendEmail): self
+    {
+        $this->sendEmail = $sendEmail;
+        return $this;
     }
 }

@@ -1,0 +1,244 @@
+{% extends 'system/base_system.html.twig' %}
+
+{% block title %}Komunikace #{{ communication.id }}{% endblock %}
+
+{% block body %}
+  <div class="detail-container">
+    <h2>Komunikace #{{ communication.id }}</h2>
+
+    <div class="detail-grid">
+      <div class="detail-section">
+        <h3>Základní informace</h3>
+        
+        <div class="detail-row">
+          <label>Email příjemce:</label>
+          <span>{{ communication.email }}</span>
+        </div>
+
+        <div class="detail-row">
+          <label>Status:</label>
+          <span style="background-color: {{ communication.statusColor }}; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem;">
+            {{ communication.statusLabel }}
+          </span>
+        </div>
+
+        <div class="detail-row">
+          <label>Vytvořeno:</label>
+          <span>{{ communication.createdAt|date('d.m.Y H:i:s') }}</span>
+        </div>
+
+        {% if communication.sentAt %}
+          <div class="detail-row">
+            <label>Odesláno:</label>
+            <span>{{ communication.sentAt|date('d.m.Y H:i:s') }}</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="detail-section">
+        <h3>Propojené entity</h3>
+        
+        {% if communication.supplier %}
+          <div class="detail-row">
+            <label>Dodavatel:</label>
+            <span>{{ communication.supplier.name }}</span>
+          </div>
+        {% endif %}
+
+        {% if communication.client %}
+          <div class="detail-row">
+            <label>Klient:</label>
+            <span>{{ communication.client.name }}</span>
+          </div>
+        {% endif %}
+
+        {% if communication.service %}
+          <div class="detail-row">
+            <label>Služba:</label>
+            <span>{{ communication.service.name }}</span>
+          </div>
+        {% endif %}
+
+        {% if communication.invoice %}
+          <div class="detail-row">
+            <label>Faktura:</label>
+            <span>{{ communication.invoice.invoiceNumber }}</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Zpráva</h3>
+      <div class="message-content">
+        {{ communication.message|nl2br }}
+      </div>
+    </div>
+
+    {% if communication.errorMessage %}
+      <div class="detail-section">
+        <h3>Chyba při odesílání</h3>
+        <div class="error-message">
+          {{ communication.errorMessage }}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="detail-actions">
+      {% if communication.status == 'pripraveno' %}
+        <button type="button" class="btn" style="background-color: #28a745; color: white;" 
+                onclick="executeCommunication({{ communication.id }})">
+          ⚡ Vykonat nyní
+        </button>
+      {% endif %}
+      
+      <a href="{{ path('communication_edit', {'id': communication.id}) }}" class="btn btn-primary">
+        ✏️ Editovat
+      </a>
+      
+      <a href="{{ path('communication_index') }}" class="btn btn-secondary">
+        ← Zpět na seznam
+      </a>
+    </div>
+  </div>
+
+  <style>
+    .detail-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .detail-section {
+      margin-bottom: 2rem;
+    }
+
+    .detail-section h3 {
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #007bff;
+      color: #333;
+    }
+
+    .detail-row {
+      display: flex;
+      margin-bottom: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .detail-row label {
+      font-weight: 600;
+      color: #555;
+      min-width: 120px;
+      margin-right: 1rem;
+    }
+
+    .detail-row span {
+      flex: 1;
+    }
+
+    .message-content {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: 4px;
+      border-left: 4px solid #007bff;
+      white-space: pre-wrap;
+      font-family: inherit;
+    }
+
+    .error-message {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 1rem;
+      border-radius: 4px;
+      border-left: 4px solid #dc3545;
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #0056b3;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background-color: #545b62;
+    }
+
+    @media (max-width: 768px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      
+      .detail-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+  <script>
+    function executeCommunication(communicationId) {
+      if (!confirm('Opravdu chcete odeslat tento email?')) {
+        return;
+      }
+
+      fetch(`/communications/${communicationId}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert('Chyba: ' + (data.message || 'Nepodařilo se odeslat email.'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Chyba při komunikaci se serverem.');
+      });
+    }
+  </script>
+{% endblock %}

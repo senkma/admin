@@ -48,7 +48,7 @@ class Supplier
     #[ORM\Column(type: 'boolean')]
     private bool $vat_payer = false;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'suppliers')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 

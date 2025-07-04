@@ -7,6 +7,7 @@ use App\Entity\Supplier;
 use App\Entity\Client;
 use App\Entity\Invoice;
 use App\Entity\InvoiceItem;
+use App\Entity\Communication;
 use App\Form\ServiceType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -150,11 +151,21 @@ class ServiceController extends AbstractController
             $service->setLastInvoiceDate($currentDate);
             $service->setUpdatedAt(new \DateTime());
 
+            // Pokud má služba zaškrtnuté odesílání emailu, vytvořit komunikaci
+            if ($service->getSendEmail()) {
+                $this->createCommunicationForService($service, $invoice, $entityManager);
+            }
+
             $entityManager->flush();
+
+            $message = 'Služba byla úspěšně vyvolána. Faktura č. ' . $invoice->getInvoiceNumber() . ' byla vytvořena.';
+            if ($service->getSendEmail()) {
+                $message .= ' Komunikace pro odeslání emailu byla také vytvořena.';
+            }
 
             return new JsonResponse([
                 'success' => true,
-                'message' => 'Služba byla úspěšně vyvolána. Faktura č. ' . $invoice->getInvoiceNumber() . ' byla vytvořena.'
+                'message' => $message
             ]);
 
         } catch (\Exception $e) {
@@ -211,7 +222,7 @@ class ServiceController extends AbstractController
             $invoiceItem->setInvoice($invoice);
             $invoiceItem->setName($serviceItem->getDescription());
             $invoiceItem->setQuantity((int)$serviceItem->getQuantity());
-            $invoiceItem->setPricePerUnit((float)$serviceItem->getUnitPrice());
+            $invoiceItem->setPricePerUnit($serviceItem->getUnitPrice());
 
             $invoice->addItem($invoiceItem);
         }
@@ -246,5 +257,43 @@ class ServiceController extends AbstractController
         }
 
         return $year . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    }
+
+    private function createCommunicationForService(Service $service, Invoice $invoice, EntityManagerInterface $entityManager): void
+    {
+        $communication = new Communication();
+        $communication->setUser($service->getUser());
+        $communication->setSupplier($service->getSupplier());
+        $communication->setClient($service->getClient());
+        $communication->setService($service);
+        $communication->setInvoice($invoice);
+
+        // Určit email příjemce
+        $email = $service->getClient()->getInvoiceEmail();
+        if (!$email) {
+            $email = $service->getSupplier()->getInvoiceEmail();
+        }
+
+        if ($email) {
+            $communication->setEmail($email);
+        } else {
+            // Fallback na email uživatele
+            $communication->setEmail($service->getUser()->getEmail());
+        }
+
+        // Vytvořit zprávu
+        $message = "Dobrý den,\n\n";
+        $message .= "byla vytvořena nová faktura pro službu: " . $service->getName() . "\n\n";
+        $message .= "Číslo faktury: " . $invoice->getInvoiceNumber() . "\n";
+        $message .= "Datum vytvoření: " . $invoice->getDateCreated()->format('d.m.Y') . "\n";
+        $message .= "Datum splatnosti: " . $invoice->getDateDue()->format('d.m.Y') . "\n\n";
+        $message .= "Faktura je připojena jako příloha tohoto emailu.\n\n";
+        $message .= "S pozdravem,\n";
+        $message .= "Fakturační systém";
+
+        $communication->setMessage($message);
+        $communication->setStatus('pripraveno');
+
+        $entityManager->persist($communication);
     }
 }

@@ -1,0 +1,20 @@
+framework:
+    mailer:
+        dsn: '%env(MAILER_DSN)%'
+        envelope:
+            sender: '%env(MAILER_FROM_EMAIL)%'
+        headers:
+            From: '%env(MAILER_FROM_EMAIL)%'
+
+when@dev:
+    framework:
+        mailer:
+            # Pro development můžeme použít file transport pro testování
+            # dsn: 'smtp://null'
+            # nebo pro skutečné odesílání přes Gmail/SMTP
+            dsn: '%env(MAILER_DSN)%'
+
+when@test:
+    framework:
+        mailer:
+            dsn: 'null://null'
