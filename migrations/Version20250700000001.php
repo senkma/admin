@@ -65,8 +65,13 @@ final class Version20250700000001 extends AbstractMigration
             }
         }
         
-        // Update client due_days column
-        $this->addSql('ALTER TABLE client CHANGE due_days due_days INT DEFAULT 14 NOT NULL');
+        // Update client due_days column if it exists
+        if ($schemaManager->tablesExist(['client'])) {
+            $clientColumns = $schemaManager->listTableColumns('client');
+            if (isset($clientColumns['due_days'])) {
+                $this->addSql('ALTER TABLE client CHANGE due_days due_days INT DEFAULT 14 NOT NULL');
+            }
+        }
         
         // Drop bank_account column from supplier if exists
         $supplierColumns = $schemaManager->listTableColumns('supplier');
