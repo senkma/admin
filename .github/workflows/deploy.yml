@@ -37,4 +37,4 @@ jobs:
                   rsync -avz --exclude='.git' ./ $SERVER_USER@$SERVER_HOST:/var/www/admin
                   ssh $SERVER_USER@$SERVER_HOST "cd /var/www/admin/.docker && APP_ENV=prod docker compose up -d"
                   ssh $SERVER_USER@$SERVER_HOST "docker exec -i admin-php-1 bash -c 'APP_ENV=prod composer install --no-dev --optimize-autoloader'"
-                  ssh $SERVER_USER@$SERVER_HOST "docker exec -i admin-php-1 bash -c 'bin/console doctrine:migrations:migrate --no-interaction'"
+                  ssh $SERVER_USER@$SERVER_HOST "docker exec -i admin-php-1 bash -c 'composer run-script deploy'"
