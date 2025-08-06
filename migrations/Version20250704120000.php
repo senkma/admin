@@ -41,15 +41,45 @@ final class Version20250704120000 extends AbstractMigration
             INDEX IDX_COMM_INVOICE (invoice_id)
         ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
 
-        // Add foreign key constraints
-        $this->addSql('ALTER TABLE communication ADD CONSTRAINT FK_COMM_USER FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE');
-        $this->addSql('ALTER TABLE communication ADD CONSTRAINT FK_COMM_SUPPLIER FOREIGN KEY (supplier_id) REFERENCES supplier (id) ON DELETE SET NULL');
-        $this->addSql('ALTER TABLE communication ADD CONSTRAINT FK_COMM_CLIENT FOREIGN KEY (client_id) REFERENCES client (id) ON DELETE SET NULL');
-        $this->addSql('ALTER TABLE communication ADD CONSTRAINT FK_COMM_SERVICE FOREIGN KEY (service_id) REFERENCES service (id) ON DELETE SET NULL');
-        $this->addSql('ALTER TABLE communication ADD CONSTRAINT FK_COMM_INVOICE FOREIGN KEY (invoice_id) REFERENCES invoice (id) ON DELETE SET NULL');
+        // Add foreign key constraints only if they don't exist
+        $connection = $this->connection;
+        $schemaManager = $connection->createSchemaManager();
+
+        if ($schemaManager->tablesExist(['communication'])) {
+            $communicationForeignKeys = $schemaManager->listTableForeignKeys('communication');
+            $existingFKs = [];
+            foreach ($communicationForeignKeys as $fk) {
+                $existingFKs[] = $fk->getName();
+            }
+
+            if (!in_array('FK_COMM_USER', $existingFKs)) {
+                $this->addSql('ALTER TABLE communication ADD CONSTRAINT FK_COMM_USER FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE');
+            }
+            if (!in_array('FK_COMM_SUPPLIER', $existingFKs)) {
+                $this->addSql('ALTER TABLE communication ADD CONSTRAINT FK_COMM_SUPPLIER FOREIGN KEY (supplier_id) REFERENCES supplier (id) ON DELETE SET NULL');
+            }
+            if (!in_array('FK_COMM_CLIENT', $existingFKs)) {
+                $this->addSql('ALTER TABLE communication ADD CONSTRAINT FK_COMM_CLIENT FOREIGN KEY (client_id) REFERENCES client (id) ON DELETE SET NULL');
+            }
+            if (!in_array('FK_COMM_SERVICE', $existingFKs)) {
+                $this->addSql('ALTER TABLE communication ADD CONSTRAINT FK_COMM_SERVICE FOREIGN KEY (service_id) REFERENCES service (id) ON DELETE SET NULL');
+            }
+            if (!in_array('FK_COMM_INVOICE', $existingFKs)) {
+                $this->addSql('ALTER TABLE communication ADD CONSTRAINT FK_COMM_INVOICE FOREIGN KEY (invoice_id) REFERENCES invoice (id) ON DELETE SET NULL');
+            }
+        }
 
         // Add sendEmail field to service table if it doesn't exist
-        $this->addSql('ALTER TABLE service ADD send_email TINYINT(1) DEFAULT 0 NOT NULL');
+        $connection = $this->connection;
+        $schemaManager = $connection->createSchemaManager();
+
+        if ($schemaManager->tablesExist(['service'])) {
+            $columns = $schemaManager->listTableColumns('service');
+
+            if (!isset($columns['send_email'])) {
+                $this->addSql('ALTER TABLE service ADD send_email TINYINT(1) DEFAULT 0 NOT NULL');
+            }
+        }
     }
 
     public function down(Schema $schema): void
