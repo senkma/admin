@@ -56,8 +56,17 @@ final class Version20250115000001 extends AbstractMigration
             ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         }
 
-        // Add foreign keys and indexes only if tables were created
-        if (!in_array('service', $tables)) {
+        // Add foreign keys and indexes only if all required tables exist
+        $requiredTables = ['service', 'users', 'supplier', 'client', 'bank_account'];
+        $allTablesExist = true;
+        foreach ($requiredTables as $table) {
+            if (!in_array($table, $tables)) {
+                $allTablesExist = false;
+                break;
+            }
+        }
+
+        if ($allTablesExist && !in_array('service', $tables)) {
             $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD2A76ED395 FOREIGN KEY (user_id) REFERENCES users (id)');
             $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD22ADD6D8C FOREIGN KEY (supplier_id) REFERENCES supplier (id)');
             $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD219EB6921 FOREIGN KEY (client_id) REFERENCES client (id)');
