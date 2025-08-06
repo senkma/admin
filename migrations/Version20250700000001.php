@@ -39,23 +39,30 @@ final class Version20250700000001 extends AbstractMigration
             $this->addSql('CREATE INDEX IDX_D15891F2ED5CA9E6 ON service_item (service_id)');
         }
         
-        // Add invoice foreign key and index if not exists
-        $invoiceForeignKeys = $schemaManager->listTableForeignKeys('invoice');
-        $hasInvoiceFK = false;
-        foreach ($invoiceForeignKeys as $fk) {
-            if ($fk->getName() === 'FK_9065174412CB990C') {
-                $hasInvoiceFK = true;
-                break;
+        // Add invoice foreign key and index if not exists and bank_account_id column exists
+        if ($schemaManager->tablesExist(['invoice'])) {
+            $invoiceColumns = $schemaManager->listTableColumns('invoice');
+
+            // Only proceed if bank_account_id column exists
+            if (isset($invoiceColumns['bank_account_id'])) {
+                $invoiceForeignKeys = $schemaManager->listTableForeignKeys('invoice');
+                $hasInvoiceFK = false;
+                foreach ($invoiceForeignKeys as $fk) {
+                    if ($fk->getName() === 'FK_9065174412CB990C') {
+                        $hasInvoiceFK = true;
+                        break;
+                    }
+                }
+
+                if (!$hasInvoiceFK) {
+                    $this->addSql('ALTER TABLE invoice ADD CONSTRAINT FK_9065174412CB990C FOREIGN KEY (bank_account_id) REFERENCES bank_account (id)');
+                }
+
+                $invoiceIndexes = $schemaManager->listTableIndexes('invoice');
+                if (!isset($invoiceIndexes['idx_9065174412cb990c'])) {
+                    $this->addSql('CREATE INDEX IDX_9065174412CB990C ON invoice (bank_account_id)');
+                }
             }
-        }
-        
-        if (!$hasInvoiceFK) {
-            $this->addSql('ALTER TABLE invoice ADD CONSTRAINT FK_9065174412CB990C FOREIGN KEY (bank_account_id) REFERENCES bank_account (id)');
-        }
-        
-        $invoiceIndexes = $schemaManager->listTableIndexes('invoice');
-        if (!isset($invoiceIndexes['idx_9065174412cb990c'])) {
-            $this->addSql('CREATE INDEX IDX_9065174412CB990C ON invoice (bank_account_id)');
         }
         
         // Update client due_days column
@@ -75,37 +82,45 @@ final class Version20250700000001 extends AbstractMigration
         $this->addSql('ALTER TABLE service CHANGE start_date start_date DATE DEFAULT NULL COMMENT \'Datum kdy služba začíná\'');
         $this->addSql('ALTER TABLE service CHANGE end_date end_date DATE DEFAULT NULL COMMENT \'Datum kdy služba končí (null = nekonečně)\'');
         
-        // Add service foreign key and index if not exists
-        $serviceForeignKeys = $schemaManager->listTableForeignKeys('service');
-        $hasServiceFK = false;
-        foreach ($serviceForeignKeys as $fk) {
-            if ($fk->getName() === 'FK_E19D9AD212CB990C') {
-                $hasServiceFK = true;
-                break;
+        // Add service foreign key and index if not exists and bank_account_id column exists
+        if ($schemaManager->tablesExist(['service'])) {
+            $serviceColumns = $schemaManager->listTableColumns('service');
+
+            // Only proceed if bank_account_id column exists
+            if (isset($serviceColumns['bank_account_id'])) {
+                $serviceForeignKeys = $schemaManager->listTableForeignKeys('service');
+                $hasServiceFK = false;
+                foreach ($serviceForeignKeys as $fk) {
+                    if ($fk->getName() === 'FK_E19D9AD212CB990C') {
+                        $hasServiceFK = true;
+                        break;
+                    }
+                }
+
+                if (!$hasServiceFK) {
+                    $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD212CB990C FOREIGN KEY (bank_account_id) REFERENCES bank_account (id)');
+                }
+
+                $serviceIndexes = $schemaManager->listTableIndexes('service');
+                if (!isset($serviceIndexes['idx_e19d9ad212cb990c'])) {
+                    $this->addSql('CREATE INDEX IDX_E19D9AD212CB990C ON service (bank_account_id)');
+                }
+
+                // Rename indexes if they exist with old names
+                if (isset($serviceIndexes['fk_e19d9ad2a76ed395'])) {
+                    $this->addSql('ALTER TABLE service RENAME INDEX fk_e19d9ad2a76ed395 TO IDX_E19D9AD2A76ED395');
+                }
+
+                if (isset($serviceIndexes['fk_e19d9ad22add6d8c'])) {
+                    $this->addSql('ALTER TABLE service RENAME INDEX fk_e19d9ad22add6d8c TO IDX_E19D9AD22ADD6D8C');
+                }
+
+                if (isset($serviceIndexes['fk_e19d9ad219eb6921'])) {
+                    $this->addSql('ALTER TABLE service RENAME INDEX fk_e19d9ad219eb6921 TO IDX_E19D9AD219EB6921');
+                }
             }
         }
-        
-        if (!$hasServiceFK) {
-            $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD212CB990C FOREIGN KEY (bank_account_id) REFERENCES bank_account (id)');
-        }
-        
-        $serviceIndexes = $schemaManager->listTableIndexes('service');
-        if (!isset($serviceIndexes['idx_e19d9ad212cb990c'])) {
-            $this->addSql('CREATE INDEX IDX_E19D9AD212CB990C ON service (bank_account_id)');
-        }
-        
-        // Rename indexes if they exist with old names
-        if (isset($serviceIndexes['fk_e19d9ad2a76ed395'])) {
-            $this->addSql('ALTER TABLE service RENAME INDEX fk_e19d9ad2a76ed395 TO IDX_E19D9AD2A76ED395');
-        }
-        
-        if (isset($serviceIndexes['fk_e19d9ad22add6d8c'])) {
-            $this->addSql('ALTER TABLE service RENAME INDEX fk_e19d9ad22add6d8c TO IDX_E19D9AD22ADD6D8C');
-        }
-        
-        if (isset($serviceIndexes['fk_e19d9ad219eb6921'])) {
-            $this->addSql('ALTER TABLE service RENAME INDEX fk_e19d9ad219eb6921 TO IDX_E19D9AD219EB6921');
-        }
+
     }
 
     public function down(Schema $schema): void
