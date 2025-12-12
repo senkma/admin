@@ -19,16 +19,19 @@ final class Version20250508153417 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql(<<<'SQL'
-            ALTER TABLE client ADD user_id INT NOT NULL
-        SQL);
-        $this->addSql(<<<'SQL'
-            ALTER TABLE client ADD CONSTRAINT FK_C7440455A76ED395 FOREIGN KEY (user_id) REFERENCES users (id)
-        SQL);
-        $this->addSql(<<<'SQL'
-            CREATE INDEX IDX_C7440455A76ED395 ON client (user_id)
-        SQL);
+        // Check if user_id column already exists
+        $connection = $this->connection;
+        $schemaManager = $connection->createSchemaManager();
+
+        if ($schemaManager->tablesExist(['client'])) {
+            $columns = $schemaManager->listTableColumns('client');
+
+            if (!isset($columns['user_id'])) {
+                $this->addSql('ALTER TABLE client ADD user_id INT NOT NULL');
+                $this->addSql('ALTER TABLE client ADD CONSTRAINT FK_C7440455A76ED395 FOREIGN KEY (user_id) REFERENCES users (id)');
+                $this->addSql('CREATE INDEX IDX_C7440455A76ED395 ON client (user_id)');
+            }
+        }
     }
 
     public function down(Schema $schema): void
