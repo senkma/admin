@@ -17,7 +17,8 @@ services:
             - symfony_app
     php:
         build:
-            context: ./php
+            context: ..
+            dockerfile: .docker/php/Dockerfile
             args:
                 TIMEZONE: ${TIMEZONE}
         volumes:
@@ -30,7 +31,8 @@ services:
             APP_ENV: ${APP_ENV:-prod}
     nginx:
         build:
-            context: ./nginx
+            context: ..
+            dockerfile: .docker/nginx/Dockerfile
         volumes:
             - ../:/var/www/symfony:cached
             - symfony_app_var:/var/www/symfony/var
