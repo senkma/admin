@@ -39,9 +39,15 @@ services:
             - 80
         networks:
             - symfony_app
+            - coolify
         labels:
             - "coolify.managed=true"
             - "coolify.port=80"
+            - "traefik.enable=true"
+            - "traefik.http.routers.nginx.rule=Host(`d11ze6qbv2vwwatdgw22b2oe.89.168.97.22.sslip.io`)"
+            - "traefik.http.routers.nginx.entrypoints=http"
+            - "traefik.http.services.nginx.loadbalancer.server.port=80"
+            - "traefik.docker.network=coolify"
 
 volumes:
     symfony_app_var:
@@ -50,3 +56,5 @@ volumes:
 
 networks:
     symfony_app:
+    coolify:
+        external: true
