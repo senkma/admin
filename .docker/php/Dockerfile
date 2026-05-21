@@ -40,3 +40,8 @@ COPY composer.json composer.lock ./
 COPY . .
 
 RUN composer install --no-interaction --no-scripts
+
+# Fix permissions for var directory
+RUN mkdir -p var/cache var/log \
+    && chown -R www-data:www-data var \
+    && chmod -R 775 var
