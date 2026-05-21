@@ -17,12 +17,12 @@ services:
             - symfony_app
     php:
         build:
-            context: ..
+            context: .
             dockerfile: .docker/php/Dockerfile
             args:
                 TIMEZONE: ${TIMEZONE}
         volumes:
-            - ../:/var/www/symfony:cached
+            - .:/var/www/symfony:cached
             - symfony_app_var:/var/www/symfony/var
             - symfony_app_vendor:/var/www/symfony/vendor
         networks:
@@ -31,10 +31,10 @@ services:
             APP_ENV: ${APP_ENV:-prod}
     nginx:
         build:
-            context: ..
+            context: .
             dockerfile: .docker/nginx/Dockerfile
         volumes:
-            - ../:/var/www/symfony:cached
+            - .:/var/www/symfony:cached
             - symfony_app_var:/var/www/symfony/var
             - symfony_app_vendor:/var/www/symfony/vendor
         ports:
