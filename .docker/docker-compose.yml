@@ -1,7 +1,6 @@
 services:
     db:
         image: mysql:8.0.33
-        platform: linux/amd64
         command: --default-authentication-plugin=mysql_native_password --bind-address=0.0.0.0 --skip-name-resolve
         volumes:
             - "db_app:/var/lib/mysql"
@@ -13,6 +12,11 @@ services:
             MYSQL_PASSWORD: ${MYSQL_PASSWORD}
         networks:
             - symfony_app
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
     php:
         build:
             context: .
@@ -27,6 +31,9 @@ services:
             - symfony_app
         environment:
             APP_ENV: ${APP_ENV:-prod}
+        depends_on:
+            db:
+                condition: service_healthy
     nginx:
         build:
             context: .
