@@ -1,5 +1,6 @@
 services:
     db:
+        container_name: invoice-db
         image: mysql:8.0.33
         platform: linux/arm64/v8
         command: --default-authentication-plugin=mysql_native_password --bind-address=0.0.0.0 --skip-name-resolve
@@ -16,6 +17,7 @@ services:
         networks:
             - symfony_app
     php:
+        container_name: invoice-php
         build:
             context: .
             dockerfile: .docker/php/Dockerfile
@@ -30,6 +32,7 @@ services:
         environment:
             APP_ENV: ${APP_ENV:-prod}
     nginx:
+        container_name: invoice-nginx
         build:
             context: .
             dockerfile: .docker/nginx/Dockerfile
