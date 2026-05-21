@@ -45,3 +45,11 @@ RUN composer install --no-interaction --no-scripts
 RUN mkdir -p var/cache var/log \
     && chown -R www-data:www-data var \
     && chmod -R 775 var
+
+# Copy entrypoint script
+COPY .docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint-migrations.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint-migrations.sh
+
+# Use custom entrypoint
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint-migrations.sh"]
+CMD ["php-fpm"]
