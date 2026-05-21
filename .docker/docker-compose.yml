@@ -39,6 +39,9 @@ services:
             - 80
         networks:
             - symfony_app
+        labels:
+            - "coolify.managed=true"
+            - "coolify.port=80"
 
 volumes:
     symfony_app_var:
