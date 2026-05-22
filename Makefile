@@ -87,18 +87,6 @@ cs-fix: ## Fix code style
 test: ## Run tests
 	docker exec -it $(PHP_CONTAINER) php bin/phpunit
 
-## Deployment
-deploy: ## Deploy to production (composer deploy)
-	docker exec -it $(PHP_CONTAINER) composer deploy
-
-## Git helpers
-git-status: ## Show git status
-	git status
-
-git-push: ## Add all, commit and push
-	@read -p "Commit message: " msg; \
-	git add . && git commit -m "$$msg" && git push
-
 ## Cleanup
 clean: ## Clean cache and logs
 	rm -rf var/cache/* var/log/*
