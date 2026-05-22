@@ -13,11 +13,14 @@ help: ## Show this help message
 build: ## Build Docker containers
 	cd .docker && docker compose build
 
-up: ## Start Docker containers
+up: ## Start Docker containers (local development with local database)
+	cd .docker && docker compose --profile local up -d
+
+up-prod: ## Start Docker containers (production mode, no local database)
 	cd .docker && docker compose up -d
 
 down: ## Stop Docker containers
-	cd .docker && docker compose down
+	cd .docker && docker compose --profile local down
 
 restart: down up ## Restart Docker containers
 

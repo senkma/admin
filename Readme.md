@@ -47,11 +47,13 @@ cd admin
 2. **Nakonfigurovat prostředí:**
 Zkopírujte `.env` a upravte databázové přístupy podle potřeby.
 
-3. **Spustit Docker kontejnery:**
+3. **Spustit Docker kontejnery (s lokální databází):**
 ```bash
 cd .docker
-docker compose up -d
+docker compose --profile local up -d
 ```
+
+**Poznámka:** `--profile local` spustí lokální MySQL databázi. Bez tohoto parametru se databáze nespustí (použije se pro produkci s Coolify managed DB).
 
 4. **Nainstalovat závislosti:**
 ```bash
