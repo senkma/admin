@@ -1,39 +1,134 @@
-# 🐳 Docker + PHP 8.2 + MySQL + Nginx + Symfony 6.2 Boilerplate
+# 📊 Invoice System - Fakturační systém
 
-## Description
+Webová aplikace pro správu faktur, klientů, dodavatelů a automatické generování opakujících se faktur.
 
-This is a complete stack for running Symfony 6.2 into Docker containers using docker-compose tool.
+## 🚀 Technologie
 
-It is composed by 4 containers:
+- **Backend:** Symfony 6.2, PHP 8.2
+- **Database:** MySQL 8.0
+- **Webserver:** Nginx + PHP-FPM (v jednom kontejneru)
+- **Deployment:** Docker, Coolify
+- **PDF generování:** DomPDF
 
-- `nginx`, acting as the webserver.
-- `php`, the PHP-FPM container with the 8.2 version of PHP.
-- `db` which is the MySQL database container with a **MySQL 8.0** image.
+## ✨ Hlavní funkce
 
-## Installation
+### 📋 Správa entit
+- **Faktury** - Vytváření, editace a zobrazení faktur
+- **Klienti** - Správa klientů s kontaktními údaji
+- **Dodavatelé** - Správa dodavatelů (vaše firmy)
+- **Služby** - Definice opakujících se služeb pro automatickou fakturaci
+- **Bankovní účty** - Správa bankovních účtů dodavatelů
 
-1. 😀 Clone this repo.
+### 🔄 Automatická fakturace
+- Definice opakujících se služeb (měsíční, čtvrtletní, roční)
+- Automatické generování faktur podle plánu
+- Nastavitelný den fakturace a splatnost
+- Manuální nebo automatické spouštění přes cron
 
-2. If you are working with Docker Desktop for Mac, ensure **you have enabled `VirtioFS` for your sharing implementation**. `VirtioFS` brings improved I/O performance for operations on bind mounts. Enabling VirtioFS will automatically enable Virtualization framework.
+### 📨 Komunikace
+- Systém pro odesílání faktur emailem
+- Šablony emailových zpráv
+- Sledování odeslané komunikace
 
-3. Create the file `./.docker/.env.nginx.local` using `./.docker/.env.nginx` as template. The value of the variable `NGINX_BACKEND_DOMAIN` is the `server_name` used in NGINX.
+### 📄 Export
+- Generování PDF faktur
+- QR kódy pro platby
 
-4. Go inside folder `./docker` and run `docker compose up -d` to start containers.
+## 📦 Instalace
 
-5. You should work inside the `php` container. This project is configured to work with [Remote Container](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension for Visual Studio Code, so you could run `Reopen in container` command after open the project.
+### Lokální vývoj
 
-6. Inside the `php` container, run `composer install` to install dependencies from `/var/www/symfony` folder.
-
-7. Use the following value for the DATABASE_URL environment variable:
-
+1. **Klonovat repozitář:**
+```bash
+git clone <repository-url>
+cd admin
 ```
-DATABASE_URL=mysql://app_user:helloworld@db:3306/app_db?serverVersion=8.0.33
+
+2. **Nakonfigurovat prostředí:**
+Zkopírujte `.env` a upravte databázové přístupy podle potřeby.
+
+3. **Spustit Docker kontejnery:**
+```bash
+cd .docker
+docker compose up -d
 ```
 
-You could change the name, user and password of the database in the `env` file at the root of the project.
+4. **Nainstalovat závislosti:**
+```bash
+docker exec -it invoice-php composer install
+```
 
-## To learn more
+5. **Připravit databázi:**
+```bash
+# Vytvořit databázi a schéma
+docker exec -it invoice-php composer prepare-database
 
-I have recorded a Youtube session explaining the different parts of this project. You could see it here:
+# Nebo použít migrace
+docker exec -it invoice-php php bin/console doctrine:migrations:migrate
+```
 
-[Boilerplate para Symfony basado en Docker, NGINX y PHP8](https://youtu.be/A82-hry3Zvw)
+6. **Přístup k aplikaci:**
+- Web: http://localhost (nebo dle konfigurace portů)
+
+### Produkční nasazení (Coolify)
+
+Projekt je připraven pro deployment přes Coolify:
+
+1. V Coolify vytvořte novou aplikaci z Git repository
+2. Nastavte environment variables (DATABASE_URL, APP_SECRET, atd.)
+3. Coolify automaticky buildne a deployne aplikaci
+4. Po deploy ručně spusťte přípravu databáze:
+```bash
+docker exec -it <container> composer prepare-database
+```
+
+## 🛠️ Užitečné příkazy
+
+### Makefile příkazy
+```bash
+make up              # Spustit kontejnery
+make down            # Zastavit kontejnery
+make restart         # Restartovat kontejnery
+make shell           # Přístup do PHP kontejneru
+make logs            # Zobrazit logy
+make prepare-db      # Připravit databázi
+make migrate         # Spustit migrace
+make cache-clear     # Vymazat cache
+```
+
+### Symfony příkazy
+```bash
+# Automatické generování faktur
+php bin/console app:generate-invoices
+
+# Dry-run (pouze ukázat co by se stalo)
+php bin/console app:generate-invoices --dry-run
+
+# S konkrétním datem
+php bin/console app:generate-invoices --force-date=2024-01-15
+```
+
+## 📚 Dokumentace
+
+- [Automatická fakturace](docs/AUTOMATIC_INVOICING.md)
+- [Komunikační systém](docs/KOMUNIKACE_SYSTEM.md)
+
+## 🐳 Docker architektura
+
+- **php kontejner** - Kombinovaný kontejner s PHP-FPM + Nginx (supervisord)
+- **db kontejner** - MySQL 8.0 databáze
+
+### Volumes
+- `symfony_app_var` - Cache a logy
+- `symfony_app_vendor` - Composer dependencies
+- `db_app` - MySQL data
+
+## 🔐 Bezpečnost
+
+- Přihlašování uživatelů pomocí Symfony Security
+- Role-based access control
+- Multi-tenancy - každý uživatel vidí pouze své data
+
+## 📝 Licence
+
+Proprietary
