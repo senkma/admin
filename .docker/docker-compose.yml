@@ -26,32 +26,20 @@ services:
         volumes:
             - symfony_app_var:/var/www/symfony/var
             - symfony_app_vendor:/var/www/symfony/vendor
-        networks:
-            - symfony_app
-        environment:
-            APP_ENV: ${APP_ENV:-prod}
-    nginx:
-        container_name: invoice-nginx
-        build:
-            context: .
-            dockerfile: .docker/nginx/Dockerfile
-        volumes:
-            - symfony_app_var:/var/www/symfony/var
-            - symfony_app_vendor:/var/www/symfony/vendor
-        volumes_from:
-            - php
         expose:
             - 80
         networks:
             - symfony_app
             - coolify
+        environment:
+            APP_ENV: ${APP_ENV:-prod}
         labels:
             - "coolify.managed=true"
             - "coolify.port=80"
             - "traefik.enable=true"
-            - "traefik.http.routers.nginx.rule=Host(`d11ze6qbv2vwwatdgw22b2oe.89.168.97.22.sslip.io`)"
-            - "traefik.http.routers.nginx.entrypoints=http"
-            - "traefik.http.services.nginx.loadbalancer.server.port=80"
+            - "traefik.http.routers.php.rule=Host(`d11ze6qbv2vwwatdgw22b2oe.89.168.97.22.sslip.io`)"
+            - "traefik.http.routers.php.entrypoints=http"
+            - "traefik.http.services.php.loadbalancer.server.port=80"
             - "traefik.docker.network=coolify"
 
 volumes:

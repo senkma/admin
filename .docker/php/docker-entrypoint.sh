@@ -1,7 +1,12 @@
 #!/bin/sh
 set -e
 
-echo "🚀 Starting PHP-FPM container..."
+echo "🚀 Starting PHP-FPM + Nginx container..."
+
+# Process Nginx template (replace ${NGINX_BACKEND_DOMAIN} with _ for catch-all)
+export NGINX_BACKEND_DOMAIN="${NGINX_BACKEND_DOMAIN:-_}"
+envsubst '${NGINX_BACKEND_DOMAIN}' < /etc/nginx/sites-available/default > /etc/nginx/sites-available/default.tmp
+mv /etc/nginx/sites-available/default.tmp /etc/nginx/sites-available/default
 
 # Wait for database to be ready
 echo "⏳ Waiting for database..."

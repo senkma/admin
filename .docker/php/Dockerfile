@@ -19,6 +19,9 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxslt1-dev \
     acl \
+    nginx \
+    supervisor \
+    gettext-base \
     && echo 'alias sf="php bin/console"' >> ~/.bashrc \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -46,10 +49,25 @@ RUN mkdir -p var/cache var/log \
     && chown -R www-data:www-data var \
     && chmod -R 775 var
 
+# Create supervisor log directory
+RUN mkdir -p /var/log/supervisor
+
+# Copy Nginx configuration
+COPY .docker/nginx/templates/default.conf.template /etc/nginx/sites-available/default
+RUN mkdir -p /etc/nginx/sites-enabled \
+    && ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default \
+    && rm -f /etc/nginx/sites-enabled/default.dpkg-dist
+
+# Copy supervisor configuration
+COPY .docker/php/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 # Copy entrypoint script
 COPY .docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint-migrations.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint-migrations.sh
 
+# Expose port 80 for Nginx
+EXPOSE 80
+
 # Use custom entrypoint
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint-migrations.sh"]
-CMD ["php-fpm"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
