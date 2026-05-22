@@ -34,9 +34,6 @@ logs-db: ## Show database container logs
 shell: ## Access PHP container shell
 	docker exec -it $(PHP_CONTAINER) bash
 
-db-shell: ## Access MySQL shell
-	docker exec -it $(DB_CONTAINER) mysql -u app_user -p052431 app_db
-
 ## Composer & Dependencies
 composer: ## Run composer install
 	docker exec -it $(PHP_CONTAINER) composer install
