@@ -12,9 +12,9 @@ done
 
 echo "✅ Database is ready!"
 
-# Run migrations
-echo "🔄 Running database migrations..."
-php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+# Prepare database (migrations + schema update)
+echo "🔄 Preparing database..."
+composer prepare-database
 
 # Clear cache
 echo "🧹 Clearing cache..."

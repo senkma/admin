@@ -67,9 +67,12 @@
     "post-update-cmd": [
       "@auto-scripts"
     ],
+    "prepare-database": [
+      "php bin/console doctrine:database:create --if-not-exists --no-interaction",
+      "php bin/console doctrine:schema:update --force --complete --no-interaction"
+    ],
     "deploy": [
-      "php bin/console doctrine:migrations:migrate --no-interaction",
-      "php bin/console doctrine:schema:update --force",
+      "@prepare-database",
       "php bin/console doctrine:cache:clear-metadata",
       "php bin/console doctrine:cache:clear-query",
       "php bin/console doctrine:cache:clear-result",
