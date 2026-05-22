@@ -12,10 +12,6 @@ done
 
 echo "✅ Database is ready!"
 
-# Prepare database (migrations + schema update)
-echo "🔄 Preparing database..."
-composer prepare-database
-
 # Clear cache
 echo "🧹 Clearing cache..."
 php bin/console cache:clear --no-warmup
