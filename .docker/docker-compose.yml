@@ -38,6 +38,8 @@ services:
         volumes:
             - symfony_app_var:/var/www/symfony/var
             - symfony_app_vendor:/var/www/symfony/vendor
+        volumes_from:
+            - php
         expose:
             - 80
         networks:
