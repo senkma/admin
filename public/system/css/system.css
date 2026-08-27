@@ -166,6 +166,18 @@ table th {
   color: #555;
 }
 
+.invoice-total {
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.invoice-year-total td {
+  font-weight: 700;
+  background-color: #f4f4f4;
+  border-top: 2px solid #ccc;
+}
+
 .invoice-items-table {
   width: 100%;
   table-layout: fixed;

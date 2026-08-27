@@ -34,8 +34,9 @@ class InvoiceController extends AbstractController
         // Filtrování faktur podle roku (pokud je vybrán)
         $selectedYear = $request->query->get('year');
         $queryBuilder = $entityManager->createQueryBuilder()
-            ->select('i')
+            ->select('i', 'items')
             ->from(Invoice::class, 'i')
+            ->leftJoin('i.items', 'items')
             ->where('i.supplier IN (:suppliers)')
             ->setParameter('suppliers', $user->getSuppliers());
 

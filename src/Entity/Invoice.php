@@ -146,4 +146,14 @@ class Invoice
 
         return $this;
     }
+
+    public function getTotalPrice(): float
+    {
+        $total = 0.0;
+        foreach ($this->items as $item) {
+            $total += (float) $item->getQuantity() * (float) $item->getPricePerUnit();
+        }
+
+        return $total;
+    }
 }

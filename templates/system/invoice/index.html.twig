@@ -24,11 +24,15 @@
         <th>Bankovní účet</th>
         <th>Datum vytvoření</th>
         <th>Datum splatnosti</th>
+        <th>Celkem</th>
         <th>Akce</th>
       </tr>
       </thead>
       <tbody>
+      {% set yearTotal = 0 %}
       {% for invoice in invoices %}
+        {% set invoiceTotal = invoice.totalPrice %}
+        {% set yearTotal = yearTotal + invoiceTotal %}
         <tr>
           <td>{{ invoice.id }}</td>
           <td>{{ invoice.invoiceNumber }}</td>
@@ -46,6 +50,7 @@
           </td>
           <td>{{ invoice.dateCreated|date('d.m.Y') }}</td>
           <td>{{ invoice.dateDue|date('d.m.Y') }}</td>
+          <td class="invoice-total">{{ invoiceTotal|number_format(2, ',', ' ') }} Kč</td>
           <td>
             <a href="{{ path('invoice_edit', { id: invoice.id }) }}" class="btn btn-warning">Edit</a>
             <a href="{{ path('invoice_clone', { id: invoice.id }) }}" class="btn btn-secondary">Klonovat</a>
@@ -58,10 +63,19 @@
         </tr>
       {% else %}
         <tr>
-          <td colspan="7">Žádné faktury nebyly nalezeny.</td>
+          <td colspan="9">Žádné faktury nebyly nalezeny.</td>
         </tr>
       {% endfor %}
       </tbody>
+      {% if invoices|length > 0 %}
+        <tfoot>
+          <tr class="invoice-year-total">
+            <td colspan="7">Součet{% if currentYear %} za rok {{ currentYear }}{% endif %}</td>
+            <td class="invoice-total">{{ yearTotal|number_format(2, ',', ' ') }} Kč</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      {% endif %}
     </table>
   </div>
 
