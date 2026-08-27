@@ -3,13 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\Invoice;
-use App\Entity\Supplier;
+use App\Entity\InvoiceItem;
 use App\Form\InvoiceType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
 class InvoiceController extends AbstractController
@@ -57,34 +56,10 @@ class InvoiceController extends AbstractController
     #[Route('/invoices/create', name: 'invoice_create')]
     public function create(Request $request, EntityManagerInterface $entityManager): Response
     {
-        $user = $this->getUser();
-        $currentYear = (new \DateTime())->format('Y');
-
-        // Získání posledního čísla faktury uživatele
-        $lastInvoice = $entityManager->createQueryBuilder()
-            ->select('i')
-            ->from(Invoice::class, 'i')
-            ->where('i.supplier IN (:suppliers)')
-            ->setParameter('suppliers', $user->getSuppliers())
-            ->andWhere('i.invoice_number LIKE :yearPrefix')
-            ->setParameter('yearPrefix', $currentYear . '%')
-            ->orderBy('i.invoice_number', 'DESC')
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
-
-        // Generování nového čísla faktury
-        $newInvoiceNumber = $currentYear . str_pad(
-                $lastInvoice ? (int)substr($lastInvoice->getInvoiceNumber(), 4) + 1 : 1,
-                4,
-                '0',
-                STR_PAD_LEFT
-            );
-
         $invoice = new Invoice();
-        $invoice->setInvoiceNumber($newInvoiceNumber);
-        $invoice->setDateCreated(new \DateTime()); // Nastavení aktuálního data
-        $invoice->setDateDue((new \DateTime())->modify('+14 days')); // Nastavení data splatnosti o 14 dní později
+        $invoice->setInvoiceNumber($this->generateNextInvoiceNumber($entityManager));
+        $invoice->setDateCreated(new \DateTime());
+        $invoice->setDateDue((new \DateTime())->modify('+14 days'));
 
         $form = $this->createForm(InvoiceType::class, $invoice, ['user' => $this->getUser()]);
 
@@ -99,6 +74,42 @@ class InvoiceController extends AbstractController
         return $this->render('system/invoice/create.html.twig', [
             'form' => $form->createView(),
             'invoice' => $invoice,
+        ]);
+    }
+
+    #[Route('/invoices/{id}/clone', name: 'invoice_clone', methods: ['GET'])]
+    public function cloneInvoice(Invoice $source, EntityManagerInterface $entityManager): Response
+    {
+        $user = $this->getUser();
+        if (!$user->getSuppliers()->contains($source->getSupplier())) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $invoice = new Invoice();
+        $invoice->setInvoiceNumber($this->generateNextInvoiceNumber($entityManager));
+        $invoice->setDateCreated(new \DateTime());
+        $invoice->setDateDue((new \DateTime())->modify('+14 days'));
+        $invoice->setSupplier($source->getSupplier());
+        $invoice->setClient($source->getClient());
+        $invoice->setBankAccount($source->getBankAccount());
+
+        foreach ($source->getItems() as $sourceItem) {
+            $item = new InvoiceItem();
+            $item->setName($sourceItem->getName());
+            $item->setQuantity($sourceItem->getQuantity());
+            $item->setPricePerUnit($sourceItem->getPricePerUnit());
+            $invoice->addItem($item);
+        }
+
+        $form = $this->createForm(InvoiceType::class, $invoice, [
+            'user' => $user,
+            'action' => $this->generateUrl('invoice_create'),
+        ]);
+
+        return $this->render('system/invoice/create.html.twig', [
+            'form' => $form->createView(),
+            'invoice' => $invoice,
+            'cloned_from' => $source,
         ]);
     }
 
@@ -147,4 +158,28 @@ class InvoiceController extends AbstractController
         ]);
     }
 
+    private function generateNextInvoiceNumber(EntityManagerInterface $entityManager): string
+    {
+        $user = $this->getUser();
+        $currentYear = (new \DateTime())->format('Y');
+
+        $lastInvoice = $entityManager->createQueryBuilder()
+            ->select('i')
+            ->from(Invoice::class, 'i')
+            ->where('i.supplier IN (:suppliers)')
+            ->setParameter('suppliers', $user->getSuppliers())
+            ->andWhere('i.invoice_number LIKE :yearPrefix')
+            ->setParameter('yearPrefix', $currentYear . '%')
+            ->orderBy('i.invoice_number', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $currentYear . str_pad(
+            $lastInvoice ? (int) substr($lastInvoice->getInvoiceNumber(), 4) + 1 : 1,
+            4,
+            '0',
+            STR_PAD_LEFT
+        );
+    }
 }

@@ -3,7 +3,10 @@
 {% block title %}Vytvořit fakturu{% endblock %}
 
 {% block body %}
-  <h2>{{ invoice.id ? 'Upravit fakturu' : 'Vytvořit fakturu' }}</h2>
+  <h2>{% if cloned_from is defined %}Klonovat fakturu{% else %}Vytvořit fakturu{% endif %}</h2>
+  {% if cloned_from is defined %}
+    <p class="clone-notice">Předvyplněno z faktury <strong>{{ cloned_from.invoiceNumber }}</strong>. Upravte údaje a uložte jako novou fakturu.</p>
+  {% endif %}
   {{ form_start(form) }}
   <div class="form-container">
     <div class="form-group">
