@@ -29,6 +29,7 @@
     <div class="form-group">
       {{ form_label(form.bankAccount) }}
       {{ form_widget(form.bankAccount, {'attr': {'class': 'form-control'}}) }}
+      {{ form_errors(form.bankAccount) }}
     </div>
     <h3>Položky faktury</h3>
 
@@ -208,17 +209,17 @@
       const bankAccountSelect = document.getElementById('invoice_bankAccount');
 
       if (supplierSelect && bankAccountSelect) {
-        function loadBankAccounts(supplierId, autoSelectDefault = false) {
+        const previouslySelectedId = bankAccountSelect.value || null;
+
+        function loadBankAccounts(supplierId, { autoSelectDefault = false, preserveSelection = false } = {}) {
           if (!supplierId) {
             bankAccountSelect.innerHTML = '<option value="">-- Vyberte bankovní účet --</option>';
             return;
           }
 
-          // Načíst bankovní účty pro vybraného dodavatele
           fetch(`/api/suppliers/${supplierId}/bank-accounts`)
             .then(response => response.json())
             .then(bankAccounts => {
-              // Vyčistit současné možnosti
               bankAccountSelect.innerHTML = '<option value="">-- Vyberte bankovní účet --</option>';
 
               let defaultAccountId = null;
@@ -229,15 +230,17 @@
                 option.textContent = account.label;
                 bankAccountSelect.appendChild(option);
 
-                // Zapamatovat si výchozí účet
                 if (account.isDefault) {
                   defaultAccountId = account.id;
                 }
               });
 
-              // Automaticky vybrat výchozí účet pouze pokud je to požadováno
-              if (autoSelectDefault && defaultAccountId) {
+              if (preserveSelection && previouslySelectedId && bankAccountSelect.querySelector(`option[value="${previouslySelectedId}"]`)) {
+                bankAccountSelect.value = previouslySelectedId;
+              } else if (autoSelectDefault && defaultAccountId) {
                 bankAccountSelect.value = defaultAccountId;
+              } else if (autoSelectDefault && bankAccounts.length === 1) {
+                bankAccountSelect.value = bankAccounts[0].id;
               }
             })
             .catch(error => {
@@ -247,14 +250,15 @@
         }
 
         supplierSelect.addEventListener('change', function() {
-          const supplierId = this.value;
-          // Při změně dodavatele automaticky vybrat výchozí účet
-          loadBankAccounts(supplierId, true);
+          loadBankAccounts(this.value, { autoSelectDefault: true });
         });
 
-        // Spustit načítání při načtení stránky, ale nevybírat automaticky výchozí účet
         if (supplierSelect.value) {
-          loadBankAccounts(supplierSelect.value, false);
+          // Při načtení stránky zachovat dříve vybraný účet, jinak výchozí
+          loadBankAccounts(supplierSelect.value, {
+            preserveSelection: true,
+            autoSelectDefault: !previouslySelectedId,
+          });
         }
       }
     });

@@ -153,7 +153,8 @@ table th {
 
 .invoice-items-table {
   width: 100%;
-  table-layout: fixed; /* Zajistí rovnoměrné rozložení sloupců */
+  table-layout: fixed;
+  border-collapse: collapse;
 }
 
 .invoice-items-table th,
@@ -161,11 +162,34 @@ table th {
   padding: 8px;
   text-align: left;
   vertical-align: middle;
-  word-wrap: break-word; /* Zajistí zalamování textu */
+  word-wrap: break-word;
 }
 
-.invoice-items-table td {
-  width: 25%; /* Nastavte šířku podle potřeby */
+/* Název ~3× širší než ostatní sloupce */
+.invoice-items-table th:nth-child(1),
+.invoice-items-table td:nth-child(1) {
+  width: 48%;
+}
+
+.invoice-items-table th:nth-child(2),
+.invoice-items-table td:nth-child(2),
+.invoice-items-table th:nth-child(3),
+.invoice-items-table td:nth-child(3),
+.invoice-items-table th:nth-child(4),
+.invoice-items-table td:nth-child(4) {
+  width: 13%;
+}
+
+.invoice-items-table th:nth-child(5),
+.invoice-items-table td:nth-child(5) {
+  width: 13%;
+  white-space: nowrap;
+}
+
+.invoice-items-table .form-control {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .form-control {
@@ -177,8 +201,4 @@ table th {
   font-size: 0.8rem; /* Zmenší velikost textu */
   padding: 0.3rem;   /* Zmenší vnitřní odsazení */
   width: auto;       /* Přizpůsobí šířku obsahu */
-}
-.invoice-items-table td:first-child {
-  min-width: 500px; /* Nastavte minimální šířku */
-  word-wrap: break-word; /* Zalamování textu, pokud je obsah příliš dlouhý */
 }

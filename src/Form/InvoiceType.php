@@ -60,20 +60,14 @@ class InvoiceType extends AbstractType
                 'required' => false,
                 'placeholder' => '-- Vyberte bankovní účet --',
                 'attr' => ['class' => 'form-control', 'id' => 'invoice_bankAccount'],
+                // Load all accounts for the user's suppliers so create+JS selection
+                // passes Symfony choice validation (dropdown is still filtered by JS).
                 'query_builder' => function ($repo) use ($options) {
-                    // V edit módu načíst účty pro aktuálního dodavatele faktury
-                    $qb = $repo->createQueryBuilder('ba');
-
-                    // Pokud editujeme existující fakturu a má dodavatele
-                    if (isset($options['data']) && $options['data'] && $options['data']->getSupplier()) {
-                        $qb->where('ba.supplier = :supplier')
-                           ->setParameter('supplier', $options['data']->getSupplier());
-                    } else {
-                        // Pro novou fakturu vrátit prázdný výsledek - bude naplněno přes JavaScript
-                        $qb->where('1 = 0');
-                    }
-
-                    return $qb;
+                    return $repo->createQueryBuilder('ba')
+                        ->join('ba.supplier', 's')
+                        ->where('s.user = :user')
+                        ->setParameter('user', $options['user'])
+                        ->orderBy('ba.id', 'ASC');
                 },
             ])
             ->add('items', CollectionType::class, [
